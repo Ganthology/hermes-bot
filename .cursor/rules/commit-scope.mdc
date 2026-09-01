@@ -1,0 +1,42 @@
+---
+description: Split commits by scope — functionality, domain, and change category. ADRs never mix with code.
+alwaysApply: true
+---
+
+# Scoped commits
+
+One commit = one scope. Scope is the intersection of:
+
+1. **Functionality** — the user-visible or reviewer-visible behavior (connect, roster, chat, auth)
+2. **Domain** — the layer or folder (`src/gateway`, `src/storage`, `app/`, `docs/adr`)
+3. **Category** — `feat` / `fix` / `docs` / `chore` / `refactor`
+
+If any of those three differ, split.
+
+## Do
+
+```text
+docs(adr): record TUI gateway as the phone pipe
+feat(gateway): add newline-delimited JSON-RPC client
+feat(storage): pin credentials and cache messages
+feat(app): add connect and agent roster screens
+```
+
+## Don't
+
+```text
+# ADR + implementation + README in one commit
+Add Hermes Bot Expo client scaffold
+```
+
+## Hard splits
+
+- **ADRs** (`docs/adr/**`, glossary used as ADR language) — own commit. Never land with app code.
+- **Onboarding** (README setup, `docs/onboarding.md`, agent skills that teach the repo) — own commit, not mixed with features.
+- **Tooling** (lockfile, Expo config, lint) — own commit unless a feature cannot compile without that one-line config change.
+
+## Check before commit
+
+- Can a reviewer understand this diff without opening another commit's files for the *same* concern?
+- Would reverting this commit undo exactly one domain?
+- Subject line names the domain in parentheses when it helps (`feat(gateway):`, `docs(adr):`).
