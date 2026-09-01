@@ -1,7 +1,93 @@
 # Hermes Bot
 
-Grok Bot-style phone client for [Nous Hermes Agent](https://github.com/NousResearch/hermes-agent).
+Grok Bot–style **phone client** for [Nous Hermes Agent](https://github.com/NousResearch/hermes-agent).
 
-Native Expo / React Native app. Client of an existing `hermes serve` host — not a host of its own.
+Native Expo / React Native UI. Named **Hermes Bot** on purpose (not Hermes Mobile). Home is a roster of named agents; each agent is one forever chat.
 
-See the working brief in Notion until this README is replaced by the first real commit.
+This repository is a **client of an existing Hermes host**. It does not provision machines, Fly, Docker, or a backend of its own. It does not wrap Telegram/WhatsApp. It is not a WebView of Hermes Desktop.
+
+When in doubt, the phone talks to **`hermes serve` / dashboard on `:9119` → WebSocket `/api/ws`** (TUI-gateway JSON-RPC). The OpenAI-compatible API server on **`:8642` is HTTP/SSE and does NOT serve `/api/ws`** — never point TUI methods there.
+
+## Glossary (source of truth)
+
+See [`docs/glossary.md`](docs/glossary.md). Architecture decisions: [`docs/adr/`](docs/adr/).
+
+## Prerequisites
+
+- Node 22+ and npm (this repo locks npm via `package-lock.json`)
+- A reachable Hermes host running the web dashboard / `hermes serve` (default **port 9119**), bound so the phone can reach it (not loopback-only)
+- A dashboard session token / auth token the gateway will accept on the socket
+
+```bash
+# On the Hermes machine (example — see upstream docs)
+hermes dashboard --host 0.0.0.0 --port 9119 --no-open
+# or: hermes serve … (same dashboard surface / :9119)
+```
+
+## Run
+
+```bash
+npm install
+npx expo start
+```
+
+Then open in Expo Go / simulator (`i` / `a`), or scan the QR code.
+
+```bash
+npm run typecheck
+npm run lint
+```
+
+### First run
+
+1. Paste the Hermes **base URL** (hint: `http://HOST:9119`).
+2. Paste an **auth / dashboard session token**.
+3. Tap **Connect**. Credentials are stored in **expo-secure-store** (no Hermes Bot account system).
+4. Tap **New agent** → name + one-line “what it is for”.
+5. Open the agent and send a message. Assistant text streams from `message.delta` when the gateway is up.
+6. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
+
+### Auth notes
+
+- Desktop often mints a **single-use WS ticket** after sign-in (`POST /api/auth/ws-ticket` → `?ticket=`).
+- This client tries ticket mint with the pasted token, then falls back to `?token=`.
+- It does **not** fake OAuth / PKCE. If gated hosts reject the pasted token, the error shows the close code.
+
+## What v1 does
+
+| Surface | Behavior |
+|--------|----------|
+| Connect | URL + token → Secure Store |
+| Home | Named agent list, empty state, New agent |
+| New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
+| Chat | Composer, message list, SQLite cache, reconcile via `session.history` / resume |
+| Streaming | TUI JSON-RPC over `/api/ws` |
+| Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
+
+RPC used: `session.create`, `session.list` (debug only), `session.resume`, `session.history`, `prompt.submit`, `approval.respond`, `clarify.respond`, `sudo.respond`, `secret.respond`.
+
+Stream events: `message.delta`, `message.complete`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
+
+There is **no `/new` in the bot chat** — forking the relationship is out of scope for v1. Compression is assumed **in-place** (same session id).
+
+## Explicit non-goals (v1)
+
+- Hosting / provisioning / custom backend / Fastlane / EAS secrets
+- Desktop-in-WebView shells
+- Power-user cockpits (logs, env keys, MCP browser, cron, session archives) — MCP is tools **on Hermes**, not the phone protocol
+- `browser_exec` session isolation (different namespace; skipped in this scaffold)
+- Second conversation database — Hermes SQLite is source of truth; the phone is cache + stream
+
+## Protocol landmines
+
+Documented against public Hermes Agent materials (≈ 2026-08-29):
+
+- Default dashboard bind is loopback; the phone needs a reachable host + auth.
+- WS close **4401** = bad ticket; **4403** = Host/peer mismatch.
+- Ordinary `prompt.submit` must **never** send rewind/`truncate_*` / `confirm_truncate` params.
+- Field names for some respond payloads are poorly documented — we feature-detect and keep payloads flexible.
+- Do not invent a fourth protocol.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).
