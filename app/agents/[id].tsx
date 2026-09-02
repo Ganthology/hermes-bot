@@ -1,14 +1,22 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
+import { mergeAssistantContent } from '../../src/chat/assistantStream';
+import {
+  applyReasoningDelta,
+  applyStatusUpdate,
+  applyThinkingDelta,
+  applyToolComplete,
+  applyToolGenerating,
+  applyToolProgress,
+  applyToolStart,
+  beginTurn,
+  emptyTurnActivity,
+  endTurn,
+  type TurnActivityState,
+} from '../../src/chat/turnActivity';
 import { Composer } from '../../src/components/Composer';
 import { MessageList } from '../../src/components/MessageList';
 import { ErrorBanner } from '../../src/components/ui';
@@ -51,7 +59,6 @@ function requestIdFromPayload(payload: Record<string, unknown> | undefined): str
 export default function AgentChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const agentId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
-  const navigation = useNavigation();
   const { ensureConnected, client } = useGateway();
   const { patchSessions, bumpAgent } = useAgents();
 
@@ -63,41 +70,57 @@ export default function AgentChatScreen() {
   const [sending, setSending] = useState(false);
   const [responding, setResponding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<TurnActivityState>(() => emptyTurnActivity());
 
   const streamingIdRef = useRef<string | null>(null);
   const liveSessionRef = useRef<string | null>(null);
   const storedSessionRef = useRef<string | null>(null);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({ title });
-  }, [navigation, title]);
-
-  const upsertStreaming = useCallback(async (agentKey: string, chunk: string, done: boolean) => {
-    const existingId = streamingIdRef.current;
-    if (!existingId) {
-      const created = await insertMessage({
+  const upsertStreaming = useCallback((agentKey: string, chunk: string, done: boolean) => {
+    let id = streamingIdRef.current;
+    if (!id) {
+      id = createId('msg');
+      streamingIdRef.current = id;
+      const created: MessageRecord = {
+        id,
         agentId: agentKey,
         role: 'assistant',
         content: chunk,
+        remoteRowId: null,
+        createdAt: Date.now(),
         streaming: !done,
+        live: true,
+      };
+      setMessages((prev) => [...prev, created]);
+      void insertMessage({
+        id: created.id,
+        agentId: created.agentId,
+        role: created.role,
+        content: created.content,
+        createdAt: created.createdAt,
+        streaming: created.streaming,
       });
-      streamingIdRef.current = done ? null : created.id;
-      setMessages((prev) => [...prev.filter((m) => m.id !== created.id), created]);
-      return;
+    } else {
+      const streamId = id;
+      setMessages((prev) => {
+        const next = prev.map((m) => {
+          if (m.id !== streamId) {
+            return m;
+          }
+          return {
+            ...m,
+            content: mergeAssistantContent(m.content, chunk, done ? 'settle' : 'append'),
+            streaming: !done,
+            live: true,
+          };
+        });
+        const current = next.find((m) => m.id === streamId);
+        if (current) {
+          void updateMessageContent(streamId, current.content, !done);
+        }
+        return next;
+      });
     }
-
-    setMessages((prev) => {
-      const next = prev.map((m) =>
-        m.id === existingId
-          ? { ...m, content: m.content + chunk, streaming: !done }
-          : m,
-      );
-      const current = next.find((m) => m.id === existingId);
-      if (current) {
-        void updateMessageContent(existingId, current.content, !done);
-      }
-      return next;
-    });
 
     if (done) {
       streamingIdRef.current = null;
@@ -117,21 +140,69 @@ export default function AgentChatScreen() {
           : {};
 
       switch (event.type) {
+        case 'message.start': {
+          setActivity((prev) => beginTurn(prev));
+          break;
+        }
         case 'message.delta': {
+          // Prefer text — rendered is TUI ANSI, not markdown source.
           const text = coerceText(payload.text ?? payload.content ?? payload.delta);
           if (text) {
-            void upsertStreaming(agentId, text, false);
+            setActivity((prev) => (prev.active ? prev : beginTurn(prev)));
+            upsertStreaming(agentId, text, false);
           }
           break;
         }
         case 'message.complete': {
           const text = coerceText(payload.text ?? payload.content);
-          if (text && !streamingIdRef.current) {
-            void upsertStreaming(agentId, text, true);
-          } else if (streamingIdRef.current) {
-            void upsertStreaming(agentId, '', true);
+          if (streamingIdRef.current || text) {
+            upsertStreaming(agentId, text, true);
           }
+          setActivity(endTurn());
           setSending(false);
+          break;
+        }
+        case 'thinking.delta': {
+          // Status caption only — not model reasoning (see hermes-agent thinking_callback).
+          setActivity((prev) => applyThinkingDelta(prev, coerceText(payload.text)));
+          break;
+        }
+        case 'reasoning.delta':
+        case 'reasoning.available': {
+          setActivity((prev) => applyReasoningDelta(prev, coerceText(payload.text)));
+          break;
+        }
+        case 'status.update': {
+          const kind = typeof payload.kind === 'string' ? payload.kind : null;
+          const text = coerceText(payload.text) || null;
+          setActivity((prev) => applyStatusUpdate(prev, kind, text));
+          break;
+        }
+        case 'tool.start': {
+          const toolId = coerceText(payload.tool_id);
+          const name = coerceText(payload.name) || 'tool';
+          const preview = coerceText(payload.args_text || payload.context) || undefined;
+          setActivity((prev) => applyToolStart(prev, toolId, name, preview));
+          break;
+        }
+        case 'tool.progress': {
+          const name = coerceText(payload.name) || null;
+          const preview = coerceText(payload.preview) || null;
+          setActivity((prev) => applyToolProgress(prev, name, preview));
+          break;
+        }
+        case 'tool.generating': {
+          const name = coerceText(payload.name) || 'tool';
+          setActivity((prev) => applyToolGenerating(prev, name));
+          break;
+        }
+        case 'tool.complete': {
+          const toolId = coerceText(payload.tool_id);
+          const name = coerceText(payload.name) || 'tool';
+          const summary =
+            coerceText(payload.summary || payload.result_text) || undefined;
+          const err = coerceText(payload.error) || undefined;
+          setActivity((prev) => applyToolComplete(prev, toolId, name, summary, err));
           break;
         }
         case 'approval.request':
@@ -163,14 +234,10 @@ export default function AgentChatScreen() {
           setInteractive((prev) => prev.filter((p) => p.requestId !== expiredId));
           break;
         }
-        case 'tool.start':
-        case 'tool.progress':
-        case 'tool.complete':
-          // Visible later; v1 keeps the transcript focused on chat text + cards.
-          break;
         case 'error': {
           const message = coerceText(payload.message ?? payload.error ?? 'Gateway error');
           setError(message || 'Gateway error');
+          setActivity(endTurn());
           setSending(false);
           break;
         }
@@ -260,6 +327,7 @@ export default function AgentChatScreen() {
     setError(null);
     setSending(true);
     streamingIdRef.current = null;
+    setActivity((prev) => beginTurn(prev));
     try {
       const gw = await ensureConnected();
       let sid = liveSessionRef.current;
@@ -283,6 +351,7 @@ export default function AgentChatScreen() {
       await promptSubmit(gw, { session_id: sid, text });
     } catch (err) {
       setSending(false);
+      setActivity(endTurn());
       setError(err instanceof Error ? err.message : 'Send failed');
     }
   };
@@ -327,10 +396,12 @@ export default function AgentChatScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={88}
+      behavior="padding"
+      automaticOffset
     >
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen
+        options={{ title, headerBackButtonDisplayMode: 'minimal' }}
+      />
       {error ? (
         <View style={styles.banner}>
           <ErrorBanner message={error} />
@@ -348,6 +419,7 @@ export default function AgentChatScreen() {
           interactive={interactive}
           responding={responding}
           onRespond={onRespond}
+          activity={activity}
         />
       )}
 

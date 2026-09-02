@@ -10,6 +10,8 @@ export type MessageRecord = {
   remoteRowId: string | null;
   createdAt: number;
   streaming: boolean;
+  /** Session-only. History rows stay false so reopen does not replay the reveal. */
+  live?: boolean;
 };
 
 type MessageRow = {
