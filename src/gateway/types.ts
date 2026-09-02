@@ -218,3 +218,91 @@ export type InteractiveRequest = {
   payload: Record<string, unknown>;
   createdAt: number;
 };
+
+/** skills.manage action list — category → skill names (hermes_cli.banner.get_available_skills). */
+export type SkillsListResult = {
+  skills?: Record<string, string[]>;
+};
+
+/** skills.manage action inspect — hub/local metadata when the host can resolve it. */
+export type SkillInspectInfo = {
+  name?: string;
+  description?: string;
+  source?: string;
+  identifier?: string;
+  tags?: string[];
+  category?: string;
+  path?: string;
+  skill_md_preview?: string;
+  [key: string]: unknown;
+};
+
+export type SkillsInspectResult = {
+  info?: SkillInspectInfo;
+};
+
+export type ToolsShowTool = {
+  name?: string;
+  description?: string;
+};
+
+export type ToolsShowSection = {
+  name?: string;
+  tools?: ToolsShowTool[];
+};
+
+/** tools.show — tools grouped by toolset (MCP servers appear as mcp-<name>). */
+export type ToolsShowResult = {
+  sections?: ToolsShowSection[];
+  total?: number;
+};
+
+export type ToolsetListItem = {
+  name?: string;
+  description?: string;
+  tool_count?: number;
+  enabled?: boolean;
+  tools?: string[];
+};
+
+export type ToolsListResult = {
+  toolsets?: ToolsetListItem[];
+};
+
+export type ToolsetsListResult = {
+  toolsets?: ToolsetListItem[];
+};
+
+/**
+ * mcp.servers.list — configured servers for a profile (optional profile param).
+ * `tools` here is the config allowlist, not the live discovered tool list.
+ */
+export type McpServerSummary = {
+  name?: string;
+  transport?: string;
+  url?: string | null;
+  command?: string | null;
+  args?: string[];
+  env?: string[];
+  auth?: unknown;
+  oauth_tokens_present?: boolean | null;
+  enabled?: boolean;
+  tools?: unknown;
+  [key: string]: unknown;
+};
+
+export type McpServersListResult = {
+  servers?: McpServerSummary[];
+};
+
+/** Shape observed on session.info via get_mcp_status (not a standalone RPC). */
+export type McpStatusEntry = {
+  name?: string;
+  transport?: string;
+  tools?: number;
+  connected?: boolean;
+  disabled?: boolean;
+  status?: string;
+  error?: string;
+  [key: string]: unknown;
+};
