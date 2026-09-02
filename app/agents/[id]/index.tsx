@@ -94,15 +94,27 @@ export default function AgentChatScreen() {
   const storedSessionRef = useRef<string | null>(null);
 
   useLayoutEffect(() => {
-    const editId = hostProfileId ?? routeId;
+    const headerId = hostProfileId ?? routeId;
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={() => router.push(`/agents/${encodeURIComponent(editId)}/edit`)}
-          hitSlop={8}
-        >
-          <Text style={styles.headerAction}>Edit</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => router.push(`/agents/${encodeURIComponent(headerId)}/info`)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Agent info"
+          >
+            <Text style={styles.headerAction}>Info</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push(`/agents/${encodeURIComponent(headerId)}/edit`)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Edit agent"
+          >
+            <Text style={styles.headerAction}>Edit</Text>
+          </Pressable>
+        </View>
       ),
     });
   }, [navigation, hostProfileId, routeId]);
@@ -491,6 +503,11 @@ export default function AgentChatScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   headerAction: {
     color: colors.accent,
     fontWeight: '600',
