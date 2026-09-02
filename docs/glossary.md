@@ -15,7 +15,8 @@ Hermes Bot is a **phone client**. Users should never need the words *session*, *
 | **TUI gateway** | JSON-RPC control channel used by Ink TUI / dashboard chat. Phone pipe = WebSocket **`/api/ws`** on the dashboard port (**9119**), newline-delimited JSON-RPC. |
 | **API server (:8642)** | OpenAI-compatible HTTP + SSE surface. **Does not** serve `/api/ws`. Never point TUI methods at 8642. |
 | **Hermes Cloud** | Hosted Nous offering (if any). Hermes Bot v1 talks to **your** gateway URL, not a Bot-owned cloud. |
-| **Tool Gateway / MCP** | Tools that run **on the Hermes host**. The phone does not speak MCP; it only sees tool events / approval cards from the TUI gateway. |
+| **Tool Gateway / MCP** | Tools that run **on the Hermes host**. The phone does not speak MCP; Agent info browses configured servers/tools via TUI RPC (`mcp.servers.list`, `tools.show`). Install/enable stays on the host. |
+| **Agent info** | Read-only browse of listable primitives (Skills, MCP) opened from an agent. v1 data is host/profile-scoped — not a fake per-agent vault. |
 | **Dashboard session token** | Auth material from signing into the Hermes web dashboard. Used to open `/api/ws` (`?token=` or minted `?ticket=`). |
 | **Ticket** | Single-use WebSocket auth query param minted by `POST /api/auth/ws-ticket` on gated hosts. |
 | **Cache** | Local SQLite on the phone (`expo-sqlite`). Reconciled from `session.history` on open. Not a sync server; do not assume `message.delta` fans out to other sockets. |

@@ -55,6 +55,7 @@ Close **4401** = bad token/ticket. **4403** = Host/peer mismatch (URL host must 
 1. Paste base URL + token → Connect (Secure Store)
 2. New agent → name + what they do → who they are → Save
 3. Open chat, send a message — tokens stream if the host is up
+4. Tap **Info** on the roster (or chat header) → Skills / MCP (read-only host browse)
 
 ## Agent checklist
 
