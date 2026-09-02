@@ -28,6 +28,7 @@ export default function RootLayout() {
             <Stack.Screen name="agents/index" options={{ title: 'Hermes Bot' }} />
             <Stack.Screen name="agents/new" options={{ title: 'New agent' }} />
             <Stack.Screen name="agents/[id]" options={{ title: 'Chat' }} />
+            <Stack.Screen name="settings" options={{ title: 'Settings' }} />
           </Stack>
         </AgentsProvider>
       </GatewayProvider>

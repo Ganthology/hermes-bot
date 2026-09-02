@@ -29,6 +29,20 @@ open prototypes/themes/index.html
 
 [`prototypes/themes/index.html`](prototypes/themes/index.html) is a static chat shell. Switch themes (Portal, Psyche, Teal, Mono, Ember), light/dark, and phone vs desktop. The app currently ships **Psyche light**.
 
+## Dictation (stacked)
+
+Voice-to-text on the chat composer — **not** voice-to-voice, and **not** a Hermes Bot backend.
+
+| PR | Ships |
+|----|--------|
+| **1 (this)** | Mic UI (tap record → stop → transcribe → **send**), level meter, cancel, `DictationProvider` interface, unavailable / demo stub |
+| **2** | Cloud STT HTTP client (OpenAI / Groq-style) |
+| **3** | On-device Whisper download + inference |
+
+Dev default uses a **demo stub** so the chrome is reviewable without a model (`EXPO_PUBLIC_DICTATION_STUB=0` forces the friendly “no engine yet” path). Settings → Dictation lists On-device / Cloud / Hermes host as greyed follow-ups.
+
+**Permissions:** `expo-audio` config plugin writes iOS `NSMicrophoneUsageDescription` and Android `RECORD_AUDIO`. Recording works in **Expo Go** for this UI PR. A later on-device Whisper native module will need a **dev client** / `npx expo prebuild` + `npx expo run:ios` / `run:android` — remind yourself to prebuild when that lands.
+
 ## Glossary and ADRs
 
 - Language: [`docs/glossary.md`](docs/glossary.md)
@@ -83,6 +97,7 @@ npm run lint
 | Home | Named agent list, empty state, New agent |
 | New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
 | Chat | Composer, message list, SQLite cache, reconcile via `session.history` / resume |
+| Dictation | Tap Mic → record → Stop → stub/unavailable transcribe → send as a normal prompt (engines in follow-ups) |
 | Streaming | TUI JSON-RPC over `/api/ws` |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 
