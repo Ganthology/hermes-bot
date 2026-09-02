@@ -7,8 +7,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardState } from 'react-native-keyboard-controller';
 
 import { colors, radii, spacing } from '../theme';
+
+const CONTROL_SIZE = 44;
 
 export function Composer({
   onSend,
@@ -20,6 +25,9 @@ export function Composer({
   sending?: boolean;
 }) {
   const [text, setText] = useState('');
+  const insets = useSafeAreaInsets();
+  const keyboardOpen = useKeyboardState((state) => state.isVisible);
+  const canSend = Boolean(text.trim()) && !disabled && !sending;
 
   const submit = async () => {
     const next = text.trim();
@@ -31,7 +39,14 @@ export function Composer({
   };
 
   return (
-    <View style={styles.wrap}>
+    <View
+      style={[
+        styles.wrap,
+        {
+          paddingBottom: keyboardOpen ? spacing.sm : spacing.sm + insets.bottom,
+        },
+      ]}
+    >
       <TextInput
         value={text}
         onChangeText={setText}
@@ -46,20 +61,27 @@ export function Composer({
       />
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="Send"
         onPress={() => {
           void submit();
         }}
-        disabled={disabled || sending || !text.trim()}
+        disabled={!canSend}
         style={({ pressed }) => [
           styles.send,
-          (disabled || sending || !text.trim()) && styles.sendDisabled,
-          pressed && styles.pressed,
+          !canSend && styles.sendDisabled,
+          pressed && canSend && styles.pressed,
         ]}
       >
         {sending ? (
           <ActivityIndicator color={colors.onAccent} />
         ) : (
-          <Text style={styles.sendLabel}>Send</Text>
+          <SymbolView
+            name="arrow.up"
+            size={18}
+            weight="semibold"
+            tintColor={colors.onAccent}
+            fallback={<Text style={styles.sendGlyph}>↑</Text>}
+          />
         )}
       </Pressable>
     </View>
@@ -72,14 +94,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.bgElevated,
   },
   input: {
     flex: 1,
-    minHeight: 44,
+    minHeight: CONTROL_SIZE,
     maxHeight: 140,
     borderWidth: 1,
     borderColor: colors.border,
@@ -90,12 +112,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgSoft,
   },
   send: {
+    width: CONTROL_SIZE,
+    height: CONTROL_SIZE,
     backgroundColor: colors.accent,
     borderRadius: radii.md,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minWidth: 72,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   sendDisabled: {
     opacity: 0.4,
@@ -103,8 +125,10 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
-  sendLabel: {
+  sendGlyph: {
     color: colors.onAccent,
+    fontSize: 18,
     fontWeight: '700',
+    lineHeight: 20,
   },
 });
