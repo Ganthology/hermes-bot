@@ -1501,19 +1501,23 @@
       }
 
       function deviceFrame(inner, showTabs) {
+        const android = isAndroid();
+        const screenH = android ? 872 : 830;
+        const statusH = android ? 36 : 54;
+        const colH = screenH - statusH;
         const body = `
           ${statusBar()}
-          <div class="phone-col">
+          <div class="phone-col" style="height:${colH}px">
             <div class="phone-surface">${inner}</div>
             ${showTabs ? tabBar() : ""}
           </div>`;
-        if (isAndroid()) {
+        if (android) {
           return `
           <div class="pixel-stage">
             <div>
               <p class="mb-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-dim">Pixel · 412 × 892</p>
               <div class="pixel">
-                <div class="pixel-screen">
+                <div class="pixel-screen" style="height:${screenH}px">
                   ${body}
                   <div class="pixel-nav"></div>
                 </div>
@@ -1526,7 +1530,7 @@
             <div>
               <p class="mb-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-dim">iPhone 16 · 393 × 852</p>
               <div class="iphone">
-                <div class="iphone-screen">
+                <div class="iphone-screen" style="height:${screenH}px">
                   ${body}
                   <div class="home-ind"></div>
                 </div>
@@ -1705,6 +1709,7 @@
                   : rosterMobile();
           const showTabs = phoneSurface === "roster" || phoneSurface === "settings";
           stage.innerHTML = deviceFrame(inner, showTabs);
+          void stage.offsetHeight;
         } else {
           const chatCol = configOpen && configPlace === "screen" ? configScreen(bot) : chat();
           const rail = configOpen && configPlace === "sidebar" ? configSidebar(bot) : routines();
