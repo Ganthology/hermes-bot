@@ -1,14 +1,9 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
+import { mergeAssistantContent } from '../../src/chat/assistantStream';
 import {
   applyReasoningDelta,
   applyStatusUpdate,
@@ -64,7 +59,6 @@ function requestIdFromPayload(payload: Record<string, unknown> | undefined): str
 export default function AgentChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const agentId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
-  const navigation = useNavigation();
   const { ensureConnected, client } = useGateway();
   const { patchSessions, bumpAgent } = useAgents();
 
@@ -82,36 +76,51 @@ export default function AgentChatScreen() {
   const liveSessionRef = useRef<string | null>(null);
   const storedSessionRef = useRef<string | null>(null);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({ title });
-  }, [navigation, title]);
-
-  const upsertStreaming = useCallback(async (agentKey: string, chunk: string, done: boolean) => {
-    const existingId = streamingIdRef.current;
-    if (!existingId) {
-      const created = await insertMessage({
+  const upsertStreaming = useCallback((agentKey: string, chunk: string, done: boolean) => {
+    let id = streamingIdRef.current;
+    if (!id) {
+      id = createId('msg');
+      streamingIdRef.current = id;
+      const created: MessageRecord = {
+        id,
         agentId: agentKey,
         role: 'assistant',
         content: chunk,
+        remoteRowId: null,
+        createdAt: Date.now(),
         streaming: !done,
+        live: true,
+      };
+      setMessages((prev) => [...prev, created]);
+      void insertMessage({
+        id: created.id,
+        agentId: created.agentId,
+        role: created.role,
+        content: created.content,
+        createdAt: created.createdAt,
+        streaming: created.streaming,
       });
-      streamingIdRef.current = done ? null : created.id;
-      setMessages((prev) => [...prev.filter((m) => m.id !== created.id), created]);
-      return;
+    } else {
+      const streamId = id;
+      setMessages((prev) => {
+        const next = prev.map((m) => {
+          if (m.id !== streamId) {
+            return m;
+          }
+          return {
+            ...m,
+            content: mergeAssistantContent(m.content, chunk, done ? 'settle' : 'append'),
+            streaming: !done,
+            live: true,
+          };
+        });
+        const current = next.find((m) => m.id === streamId);
+        if (current) {
+          void updateMessageContent(streamId, current.content, !done);
+        }
+        return next;
+      });
     }
-
-    setMessages((prev) => {
-      const next = prev.map((m) =>
-        m.id === existingId
-          ? { ...m, content: m.content + chunk, streaming: !done }
-          : m,
-      );
-      const current = next.find((m) => m.id === existingId);
-      if (current) {
-        void updateMessageContent(existingId, current.content, !done);
-      }
-      return next;
-    });
 
     if (done) {
       streamingIdRef.current = null;
@@ -140,17 +149,14 @@ export default function AgentChatScreen() {
           const text = coerceText(payload.text ?? payload.content ?? payload.delta);
           if (text) {
             setActivity((prev) => (prev.active ? prev : beginTurn(prev)));
-            void upsertStreaming(agentId, text, false);
+            upsertStreaming(agentId, text, false);
           }
           break;
         }
         case 'message.complete': {
-          const alreadyStreamed = payload.already_streamed === true;
           const text = coerceText(payload.text ?? payload.content);
-          if (!alreadyStreamed && text && !streamingIdRef.current) {
-            void upsertStreaming(agentId, text, true);
-          } else if (streamingIdRef.current) {
-            void upsertStreaming(agentId, '', true);
+          if (streamingIdRef.current || text) {
+            upsertStreaming(agentId, text, true);
           }
           setActivity(endTurn());
           setSending(false);
@@ -390,10 +396,12 @@ export default function AgentChatScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={88}
+      behavior="padding"
+      automaticOffset
     >
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen
+        options={{ title, headerBackButtonDisplayMode: 'minimal' }}
+      />
       {error ? (
         <View style={styles.banner}>
           <ErrorBanner message={error} />

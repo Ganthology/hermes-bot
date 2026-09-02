@@ -1,9 +1,13 @@
 import React, { useMemo } from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { Linking, StyleSheet, Text } from 'react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
-import { StreamdownText } from 'react-native-streamdown';
+import Animated, { LinearTransition } from 'react-native-reanimated';
+import remend from 'remend';
 
+import { useRevealedText } from '../chat/assistantStream';
 import { colors, radii, typography } from '../theme';
+
+const growTransition = LinearTransition.duration(120);
 
 /** Psyche ink / accent / soft field for native markdown (assistant only). */
 const psycheMarkdownStyle: MarkdownStyle = {
@@ -56,6 +60,27 @@ const psycheMarkdownStyle: MarkdownStyle = {
   },
 };
 
+const remendConfig = {
+  bold: true,
+  italic: true,
+  boldItalic: true,
+  strikethrough: true,
+  links: true,
+  linkMode: 'text-only' as const,
+  images: true,
+  inlineCode: true,
+  katex: false,
+  setextHeadings: true,
+};
+
+function healMarkdown(source: string): string {
+  try {
+    return remend(source, remendConfig);
+  } catch {
+    return source;
+  }
+}
+
 function openLink(url: string) {
   if (url) {
     void Linking.openURL(url);
@@ -63,45 +88,53 @@ function openLink(url: string) {
 }
 
 /**
- * Live-token markdown via Software Mansion StreamdownText while streaming
- * (remend off-thread + streamingAnimation). Frozen messages use EnrichedMarkdownText.
+ * Live / dumped-complete text is revealed on RN Text so the bubble grows.
+ * EnrichedMarkdown only mounts after the reveal catches up (it locks first height).
  */
 export function StreamingMarkdown({
   markdown,
   streaming,
+  smooth = false,
 }: {
   markdown: string;
   streaming: boolean;
+  smooth?: boolean;
 }) {
   const style = useMemo(() => psycheMarkdownStyle, []);
-  const shared = {
-    flavor: 'github' as const,
-    markdownStyle: style,
-    containerStyle: styles.container,
-    onLinkPress: ({ url }: { url: string }) => openLink(url),
-  };
+  const { text: revealed, revealing } = useRevealedText(markdown, smooth);
+  const livePaint = streaming || revealing;
+  const painted = livePaint ? healMarkdown(revealed) : markdown;
 
-  if (streaming) {
-    return (
-      <StreamdownText
-        markdown={markdown}
-        streamingConfig={{ tableMode: 'progressive', codeBlockMode: 'progressive' }}
-        {...shared}
-      />
-    );
+  if (!painted) {
+    return null;
   }
 
   return (
-    <EnrichedMarkdownText
-      markdown={markdown}
-      streamingAnimation={false}
-      {...shared}
-    />
+    <Animated.View layout={growTransition} style={styles.grow}>
+      {livePaint ? (
+        <Text selectable style={styles.live}>
+          {painted}
+        </Text>
+      ) : (
+        <EnrichedMarkdownText
+          markdown={painted}
+          flavor="github"
+          markdownStyle={style}
+          streamingAnimation={false}
+          md4cFlags={{ latexMath: false }}
+          onLinkPress={({ url }) => openLink(url)}
+        />
+      )}
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
+  grow: {
+    alignSelf: 'stretch',
+  },
+  live: {
+    color: colors.text,
+    ...typography.body,
   },
 });

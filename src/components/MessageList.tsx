@@ -7,6 +7,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import type { TurnActivityState } from '../chat/turnActivity';
 import type { MessageRecord } from '../storage/messages';
@@ -17,6 +18,7 @@ import { StreamingMarkdown } from './StreamingMarkdown';
 import { TurnActivityPanel } from './TurnActivityPanel';
 
 const NEAR_BOTTOM_PX = 96;
+const bubbleLayout = LinearTransition.duration(120);
 
 export function MessageList({
   messages,
@@ -77,10 +79,12 @@ export function MessageList({
   return (
     <FlatList
       ref={listRef}
+      style={styles.list}
       data={messages}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.content}
       renderItem={({ item }) => <Bubble message={item} />}
+      extraData={`${lastContent}:${lastStreaming}:${activityKey}`}
       onScroll={onScroll}
       scrollEventThrottle={16}
       onContentSizeChange={onContentSizeChange}
@@ -106,20 +110,30 @@ export function MessageList({
 function Bubble({ message }: { message: MessageRecord }) {
   const isUser = message.role === 'user';
   return (
-    <View style={[styles.bubble, isUser ? styles.user : styles.assistant]}>
+    <Animated.View
+      layout={bubbleLayout}
+      style={[styles.bubble, isUser ? styles.user : styles.assistant]}
+    >
       <Text style={styles.role}>
         {isUser ? 'You' : message.role === 'assistant' ? 'Hermes' : message.role}
       </Text>
       {isUser ? (
         <Text style={styles.body}>{message.content}</Text>
       ) : (
-        <StreamingMarkdown markdown={message.content} streaming={message.streaming} />
+        <StreamingMarkdown
+          markdown={message.content}
+          streaming={message.streaming}
+          smooth={Boolean(message.live || message.streaming)}
+        />
       )}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   content: {
     padding: spacing.md,
     paddingBottom: spacing.xl,
@@ -129,6 +143,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.md,
     maxWidth: '92%',
+    overflow: 'visible',
   },
   user: {
     alignSelf: 'flex-end',
@@ -136,6 +151,7 @@ const styles = StyleSheet.create({
   },
   assistant: {
     alignSelf: 'flex-start',
+    width: '92%',
     backgroundColor: colors.assistantBubble,
     borderWidth: 1,
     borderColor: colors.border,
