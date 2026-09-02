@@ -107,6 +107,19 @@ export default function AgentChatScreen() {
             <Text style={styles.headerAction}>Info</Text>
           </Pressable>
           <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/connected',
+                params: headerId ? { profile: headerId } : {},
+              })
+            }
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Connected services"
+          >
+            <Text style={styles.headerAction}>Connected</Text>
+          </Pressable>
+          <Pressable
             onPress={() => router.push(`/agents/${encodeURIComponent(headerId)}/edit`)}
             hitSlop={8}
             accessibilityRole="button"

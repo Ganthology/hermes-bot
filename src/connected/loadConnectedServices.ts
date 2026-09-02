@@ -1,7 +1,7 @@
 import type { HermesGatewayClient } from '../gateway/client';
 import {
   mcpCatalog,
-  mcpServersList,
+  mcpServersListSoft,
   skillsManageList,
   toolsetsList,
   toolsList,
@@ -21,7 +21,7 @@ export async function loadConnectedServices(
     toolsetsList(client),
     toolsList(client),
     mcpCatalog(client, profileOpts),
-    mcpServersList(client, profileOpts),
+    mcpServersListSoft(client, profileOpts),
   ]);
 
   const toolsets =

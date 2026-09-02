@@ -61,6 +61,8 @@ export default function RootLayout() {
                   <Stack.Screen name="agents/[id]/skills/[skill]" options={{ title: 'Skill' }} />
                   <Stack.Screen name="agents/[id]/mcp/index" options={{ title: 'MCP' }} />
                   <Stack.Screen name="agents/[id]/mcp/[server]" options={{ title: 'MCP tools' }} />
+                  <Stack.Screen name="connected/index" options={{ title: 'Connected' }} />
+                  <Stack.Screen name="connected/[id]" options={{ title: 'Service' }} />
                 </Stack>
               </HostAgentsProvider>
             </AgentsProvider>
