@@ -13,7 +13,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <GatewayProvider>
         <AgentsProvider>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           <Stack
             screenOptions={{
               headerStyle: { backgroundColor: colors.bgElevated },

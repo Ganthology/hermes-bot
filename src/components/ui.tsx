@@ -43,6 +43,7 @@ export function Button({
       <Text
         style={[
           styles.label,
+          variant === 'primary' && styles.primaryLabel,
           variant === 'ghost' && styles.ghostLabel,
           variant === 'danger' && styles.dangerLabel,
         ]}
@@ -126,6 +127,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  primaryLabel: {
+    color: colors.onAccent,
+  },
   ghostLabel: {
     color: colors.text,
   },
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
   },
   errorBanner: {
-    backgroundColor: '#3A1C1C',
+    backgroundColor: '#FDECEC',
     borderColor: colors.danger,
     borderWidth: 1,
     borderRadius: radii.md,
@@ -155,7 +159,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   errorText: {
-    color: '#F7C7C7',
+    color: colors.danger,
     ...typography.body,
   },
   empty: {
