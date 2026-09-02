@@ -6,6 +6,7 @@ import type {
   FileAttachResult,
   ImageAttachBytesParams,
   ImageAttachBytesResult,
+  McpCatalogResult,
   McpServersListResult,
   PdfAttachParams,
   PdfAttachResult,
@@ -230,16 +231,32 @@ export async function toolsShow(
 
 export async function toolsList(
   client: HermesGatewayClient,
-  params: { session_id?: string } = {},
-): Promise<ToolsListResult> {
-  return client.request<ToolsListResult>('tools.list', { ...params });
+  params: { session_id?: string; sessionId?: string } = {},
+): Promise<ToolsListResult | null> {
+  try {
+    return await client.request<ToolsListResult>('tools.list', {
+      ...(params.session_id ?? params.sessionId
+        ? { session_id: params.session_id ?? params.sessionId }
+        : {}),
+    });
+  } catch {
+    return null;
+  }
 }
 
 export async function toolsetsList(
   client: HermesGatewayClient,
-  params: { session_id?: string } = {},
-): Promise<ToolsetsListResult> {
-  return client.request<ToolsetsListResult>('toolsets.list', { ...params });
+  params: { session_id?: string; sessionId?: string } = {},
+): Promise<ToolsetsListResult | null> {
+  try {
+    return await client.request<ToolsetsListResult>('toolsets.list', {
+      ...(params.session_id ?? params.sessionId
+        ? { session_id: params.session_id ?? params.sessionId }
+        : {}),
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -253,4 +270,40 @@ export async function mcpServersList(
   return client.request<McpServersListResult>('mcp.servers.list', {
     ...(options.profile ? { profile: options.profile } : {}),
   });
+}
+
+/** Soft-fail list for connected-services inference. */
+export async function skillsManageList(
+  client: HermesGatewayClient,
+  options: { profile?: string } = {},
+): Promise<SkillsListResult | null> {
+  try {
+    return await skillsList(client, options);
+  } catch {
+    return null;
+  }
+}
+
+export async function mcpCatalog(
+  client: HermesGatewayClient,
+  options: { profile?: string } = {},
+): Promise<McpCatalogResult | null> {
+  try {
+    return await client.request<McpCatalogResult>('mcp.catalog', {
+      ...(options.profile ? { profile: options.profile } : {}),
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function mcpServersListSoft(
+  client: HermesGatewayClient,
+  options: { profile?: string } = {},
+): Promise<McpServersListResult | null> {
+  try {
+    return await mcpServersList(client, options);
+  } catch {
+    return null;
+  }
 }

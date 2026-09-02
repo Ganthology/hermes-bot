@@ -295,6 +295,23 @@ export type McpServersListResult = {
   servers?: McpServerSummary[];
 };
 
+/** Alias used by connected-services inference (same list payload). */
+export type McpConfiguredServer = McpServerSummary;
+
+/** `mcp.catalog` — curated catalog with install/enable state (no secrets). */
+export type McpCatalogServer = {
+  name: string;
+  description?: string;
+  installed?: boolean;
+  enabled?: boolean;
+  requires?: string[];
+  transport?: string;
+};
+
+export type McpCatalogResult = {
+  servers?: McpCatalogServer[];
+};
+
 /** Shape observed on session.info via get_mcp_status (not a standalone RPC). */
 export type McpStatusEntry = {
   name?: string;
