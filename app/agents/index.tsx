@@ -21,6 +21,11 @@ export default function AgentsHomeScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => (
+        <Pressable onPress={() => router.push('/settings')} hitSlop={8}>
+          <Text style={styles.headerAction}>Settings</Text>
+        </Pressable>
+      ),
       headerRight: () => (
         <Pressable
           onPress={() => {
