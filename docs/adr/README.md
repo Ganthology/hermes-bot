@@ -13,6 +13,7 @@ Index for humans and agents. Also linked from [README](../../README.md) and [AGE
 | [007](007-native-ui.md) | Native UI, not Desktop-in-WebView | Proposed |
 | [008](008-conversational-new-agent.md) | Conversational new agent (thin v1) | Proposed |
 | [012](012-agent-info-primitives.md) | Agent info browsable primitives (skills, MCP) | Proposed |
+| [013](013-agent-connected-services.md) | Connected services — host-scoped product catalog | Proposed |
 | [014](014-chat-attachments.md) | Chat attachments (remote byte-upload) | Proposed |
 | [015](015-phone-agent-hermes-profile.md) | Phone agent = Hermes profile | Proposed |
 
