@@ -57,7 +57,7 @@ export function Composer({
         ]}
       >
         {sending ? (
-          <ActivityIndicator color={colors.text} />
+          <ActivityIndicator color={colors.onAccent} />
         ) : (
           <Text style={styles.sendLabel}>Send</Text>
         )}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   sendLabel: {
-    color: colors.text,
+    color: colors.onAccent,
     fontWeight: '700',
   },
 });

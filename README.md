@@ -19,6 +19,16 @@ Agents: [`AGENTS.md`](AGENTS.md) → skill [`.cursor/skills/onboard-hermes-bot`]
 3. Paste a dashboard session token (browser cookie `hermes_session_at` after login)
 4. Create an agent, send a message
 
+## UI prototypes
+
+Look-and-feel is iterated in static **HTML + CSS**, not by restyling the Expo screens. Open the playground in a browser, pick a direction, then copy tokens into [`src/theme.ts`](src/theme.ts).
+
+```bash
+open prototypes/themes/index.html
+```
+
+[`prototypes/themes/index.html`](prototypes/themes/index.html) is a static chat shell. Switch themes (Portal, Psyche, Teal, Mono, Ember), light/dark, and phone vs desktop. The app currently ships **Psyche light**.
+
 ## Glossary and ADRs
 
 - Language: [`docs/glossary.md`](docs/glossary.md)

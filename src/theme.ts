@@ -1,20 +1,21 @@
-/** Visual tokens for Hermes Bot. Keep the shell quiet — brand first, one job per screen. */
+/** Psyche light — Nous glass. #F8FAFF field, ink #0E2766, accent #0053FD, 4px. */
 export const colors = {
-  bg: '#0B1220',
-  bgElevated: '#121A2B',
-  bgSoft: '#182234',
-  border: '#2A3548',
-  text: '#F4F7FB',
-  textMuted: '#9AA6B2',
+  bg: '#F8FAFF',
+  bgElevated: '#FFFFFF',
+  bgSoft: '#F4F7FF',
+  border: '#C2D4F7',
+  text: '#0E2766',
+  textMuted: '#3D4F7A',
   textDim: '#6B7785',
-  accent: '#3D9CF0',
-  accentPressed: '#2F7FC4',
-  danger: '#E25C5C',
+  accent: '#0053FD',
+  accentPressed: '#0040C8',
+  onAccent: '#F8FAFF',
+  danger: '#C23B3B',
   success: '#3CB889',
-  userBubble: '#1E3A5F',
-  assistantBubble: '#182234',
-  card: '#151E30',
-  warning: '#D4A017',
+  userBubble: '#E8F0FF',
+  assistantBubble: '#FFFFFF',
+  card: '#E8F0FF',
+  warning: '#C47B00',
 } as const;
 
 export const spacing = {
@@ -27,9 +28,9 @@ export const spacing = {
 } as const;
 
 export const radii = {
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 4,
+  md: 4,
+  lg: 4,
 } as const;
 
 export const typography = {

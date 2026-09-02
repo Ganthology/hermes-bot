@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="portal" data-mode="light" data-layout="phone">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hermes Bot — theme prototypes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["var(--font-sans)"],
+              mono: ["var(--font-mono)"],
+              display: ["var(--font-display)"],
+            },
+            borderRadius: {
+              theme: "var(--radius)",
+              chip: "var(--radius-chip)",
+            },
+            colors: {
+              bg: "var(--bg)",
+              chrome: "var(--chrome)",
+              sidebar: "var(--sidebar)",
+              elevated: "var(--elevated)",
+              hair: "var(--hair)",
+              ink: "var(--ink)",
+              mute: "var(--mute)",
+              dim: "var(--dim)",
+              accent: "var(--accent)",
+              cream: "var(--cream)",
+              warn: "var(--warn)",
+            },
+            boxShadow: {
+              nous: "var(--shadow-nous)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      html[data-mode="light"] {
+        color-scheme: light;
+      }
+      html[data-mode="dark"] {
+        color-scheme: dark;
+      }
+
+      [data-theme="psyche"] {
+        --radius: 4px;
+        --radius-chip: 999px;
+        --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --font-display: "Instrument Serif", "IBM Plex Sans", serif;
+      }
+      [data-theme="psyche"][data-mode="light"] {
+        --bg: #f8faff;
+        --chrome: #ffffff;
+        --sidebar: #f4f7ff;
+        --elevated: #e8f0ff;
+        --hair: color-mix(in srgb, #0053fd 12%, #dce6f6);
+        --ink: #0e2766;
+        --mute: #3d4f7a;
+        --dim: #6b7785;
+        --accent: #0053fd;
+        --cream: #0e2766;
+        --warn: #c47b00;
+        --shadow-nous: 0 1px 2px color-mix(in srgb, #0053fd 8%, transparent),
+          0 12px 28px -16px color-mix(in srgb, #0e2766 14%, transparent);
+        --statue: none;
+      }
+      [data-theme="psyche"][data-mode="dark"] {
+        --bg: #081633;
+        --chrome: #0a1a3d;
+        --sidebar: #07122c;
+        --elevated: #0e2766;
+        --hair: color-mix(in srgb, #ffe6cb 12%, transparent);
+        --ink: #ffe6cb;
+        --mute: color-mix(in srgb, #ffe6cb 68%, #0e2766);
+        --dim: color-mix(in srgb, #ffe6cb 42%, #0e2766);
+        --accent: #0053fd;
+        --cream: #ffe6cb;
+        --warn: #ffd24a;
+        --shadow-nous: 0 2px 8px color-mix(in srgb, #000 18%, transparent),
+          0 16px 32px -20px color-mix(in srgb, #000 40%, transparent);
+        --statue: radial-gradient(120% 80% at 80% 120%, #0053fd22, transparent 50%);
+      }
+
+      [data-theme="portal"] {
+        --radius: 8px;
+        --radius-chip: 999px;
+        --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --font-display: "IBM Plex Sans", sans-serif;
+      }
+      [data-theme="portal"][data-mode="light"] {
+        --bg: #e8f2fd;
+        --chrome: #f8faff;
+        --sidebar: #f4f8fe;
+        --elevated: #ffffff;
+        --hair: color-mix(in srgb, #0053fd 14%, #d5e4f6);
+        --ink: #170d02;
+        --mute: #3d4a5c;
+        --dim: #6b7785;
+        --accent: #0053fd;
+        --cream: #170d02;
+        --warn: #c47b00;
+        --shadow-nous: 0 1px 2px color-mix(in srgb, #0053fd 8%, transparent),
+          0 12px 28px -16px color-mix(in srgb, #0053fd 22%, transparent);
+        --statue: none;
+      }
+      [data-theme="portal"][data-mode="dark"] {
+        --bg: #071018;
+        --chrome: #0b1520;
+        --sidebar: #050d14;
+        --elevated: #122033;
+        --hair: color-mix(in srgb, #8eb6ff 16%, transparent);
+        --ink: #e8f2fd;
+        --mute: #9bb0c8;
+        --dim: #6b8299;
+        --accent: #4d8bff;
+        --cream: #e8f2fd;
+        --warn: #ffd24a;
+        --shadow-nous: 0 2px 10px color-mix(in srgb, #000 40%, transparent);
+        --statue: none;
+      }
+
+      [data-theme="teal"] {
+        --radius: 8px;
+        --radius-chip: 999px;
+        --font-sans: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, monospace;
+        --font-display: ui-sans-serif, system-ui, sans-serif;
+      }
+      [data-theme="teal"][data-mode="light"] {
+        --bg: #f6f1e6;
+        --chrome: #fffaf0;
+        --sidebar: #f3ece0;
+        --elevated: #ffffff;
+        --hair: color-mix(in srgb, #041c1c 12%, #e5d8c4);
+        --ink: #041c1c;
+        --mute: #4a5a52;
+        --dim: #7a6b58;
+        --accent: #0d4a44;
+        --cream: #041c1c;
+        --warn: #b45309;
+        --shadow-nous: 0 10px 28px -18px color-mix(in srgb, #041c1c 22%, transparent);
+        --statue: none;
+      }
+      [data-theme="teal"][data-mode="dark"] {
+        --bg: #041c1c;
+        --chrome: #062424;
+        --sidebar: #031616;
+        --elevated: #0a2a2a;
+        --hair: color-mix(in srgb, #ffe6cb 10%, transparent);
+        --ink: #fff6ea;
+        --mute: #c9b39a;
+        --dim: #8a7764;
+        --accent: #ffe6cb;
+        --cream: #ffe6cb;
+        --warn: #ffbd38;
+        --shadow-nous: 0 2px 10px color-mix(in srgb, #000 35%, transparent);
+        --statue: radial-gradient(90% 60% at 10% 0%, rgba(255, 189, 56, 0.12), transparent 55%);
+      }
+
+      [data-theme="mono"] {
+        --radius: 0px;
+        --radius-chip: 0px;
+        --font-sans: "IBM Plex Sans", ui-sans-serif, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --font-display: "IBM Plex Mono", ui-monospace, monospace;
+      }
+      [data-theme="mono"][data-mode="light"] {
+        --bg: #f4f4f4;
+        --chrome: #ffffff;
+        --sidebar: #f0f0f0;
+        --elevated: #ffffff;
+        --hair: #d4d4d4;
+        --ink: #0e0e0e;
+        --mute: #525252;
+        --dim: #737373;
+        --accent: #0e0e0e;
+        --cream: #0e0e0e;
+        --warn: #a16207;
+        --shadow-nous: 0 0 0 1px #d4d4d4;
+        --statue: none;
+      }
+      [data-theme="mono"][data-mode="dark"] {
+        --bg: #0e0e0e;
+        --chrome: #0d0d0e;
+        --sidebar: #0a0a0b;
+        --elevated: #161618;
+        --hair: color-mix(in srgb, #fff 10%, transparent);
+        --ink: #eaeaea;
+        --mute: #9a9a9a;
+        --dim: #6a6a6a;
+        --accent: #eaeaea;
+        --cream: #eaeaea;
+        --warn: #ffd24a;
+        --shadow-nous: 0 0 0 1px color-mix(in srgb, #fff 10%, transparent);
+        --statue: none;
+      }
+
+      [data-theme="ember"] {
+        --radius: 4px;
+        --radius-chip: 4px;
+        --font-sans: "Newsreader", Georgia, serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --font-display: "Newsreader", Georgia, serif;
+      }
+      [data-theme="ember"][data-mode="light"] {
+        --bg: #fff4eb;
+        --chrome: #fffaf6;
+        --sidebar: #fde8d6;
+        --elevated: #ffffff;
+        --hair: color-mix(in srgb, #c2410c 14%, #f0d4c0);
+        --ink: #1a0a06;
+        --mute: #6b3d28;
+        --dim: #8a6a4e;
+        --accent: #c2410c;
+        --cream: #1a0a06;
+        --warn: #c2410c;
+        --shadow-nous: 0 14px 32px -22px color-mix(in srgb, #c2410c 28%, transparent);
+        --statue: none;
+      }
+      [data-theme="ember"][data-mode="dark"] {
+        --bg: #1a0a06;
+        --chrome: #220d08;
+        --sidebar: #140705;
+        --elevated: #2a100a;
+        --hair: color-mix(in srgb, #ffd8b0 12%, transparent);
+        --ink: #ffd8b0;
+        --mute: #c9a07a;
+        --dim: #8a6a4e;
+        --accent: #f97316;
+        --cream: #ffd8b0;
+        --warn: #f97316;
+        --shadow-nous: 0 18px 40px -24px color-mix(in srgb, #f97316 35%, transparent);
+        --statue: radial-gradient(80% 50% at 100% 0%, rgba(249, 115, 22, 0.16), transparent 50%);
+      }
+
+      html,
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        min-height: 100%;
+      }
+
+      body {
+        background-image: var(--statue);
+      }
+
+      .hair {
+        border-color: var(--hair);
+      }
+
+      .face {
+        width: 2.25rem;
+        height: 2.25rem;
+        flex-shrink: 0;
+      }
+
+      .scan::after {
+        content: "";
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 99px;
+        background: var(--ink);
+        box-shadow: 8px 0 0 var(--ink);
+        margin: 14px auto 0;
+        animation: blink 2.4s steps(1) infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        86% {
+          opacity: 1;
+        }
+        87%,
+        92% {
+          opacity: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .scan::after {
+          animation: none;
+        }
+      }
+
+      .iphone-stage {
+        display: flex;
+        justify-content: center;
+        padding: 28px 16px 40px;
+      }
+
+      /* iPhone 16 logical points — 393 × 852 */
+      .iphone {
+        width: 393px;
+        height: 852px;
+        padding: 11px;
+        border-radius: 56px;
+        background: #0a0a0a;
+        box-shadow:
+          0 0 0 1px #2a2a2a,
+          0 24px 60px -20px color-mix(in srgb, #000 55%, transparent);
+      }
+
+      .iphone-screen {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 46px;
+        background: var(--bg);
+      }
+
+      .status-bar {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        height: 54px;
+        padding: 14px 28px 0;
+        font-family: var(--font-sans);
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .island {
+        width: 118px;
+        height: 34px;
+        border-radius: 20px;
+        background: #000;
+      }
+
+      .home-ind {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        width: 128px;
+        height: 5px;
+        border-radius: 99px;
+        background: color-mix(in srgb, var(--ink) 35%, transparent);
+        transform: translateX(-50%);
+      }
+
+      .icon-btn {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        border-radius: 999px;
+        color: var(--ink);
+      }
+      .icon-btn.plus {
+        background: var(--elevated);
+      }
+      .icon-btn.send {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .icon-btn.mic {
+        background: var(--elevated);
+      }
+      .icon-btn.rec {
+        background: var(--warn);
+        color: var(--bg);
+      }
+      .icon-btn svg,
+      .tool-row svg,
+      .sheet button.row svg,
+      .computer-bar svg,
+      .attach-chip svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .tool-row svg,
+      .computer-bar svg,
+      .attach-chip svg {
+        width: 14px;
+        height: 14px;
+      }
+      .composer-pill {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        padding: 6px;
+        border: 1px solid var(--hair);
+        background: var(--elevated);
+        border-radius: 24px;
+      }
+      .composer-pill textarea {
+        flex: 1;
+        min-height: 36px;
+        max-height: 96px;
+        margin: 0;
+        padding: 8px 4px;
+        resize: none;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        font-size: 17px;
+        line-height: 1.25;
+        outline: none;
+      }
+      .rec-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px 6px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--warn);
+      }
+      .rec-bar i {
+        width: 6px;
+        height: 6px;
+        border-radius: 99px;
+        background: var(--warn);
+        animation: blink 1s steps(1) infinite;
+      }
+      .tool-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .tool-row b {
+        font-weight: 500;
+        color: var(--mute);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border: 1px solid var(--hair);
+        background: var(--elevated);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--mute);
+      }
+      .sheet {
+        border-top: 1px solid var(--hair);
+        background: var(--chrome);
+        padding: 10px 12px 18px;
+      }
+      .sheet button.row {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 4px;
+        text-align: left;
+        font-size: 15px;
+      }
+      .tool-row .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 99px;
+        background: var(--accent);
+        animation: blink 1s steps(1) infinite;
+      }
+      .computer {
+        overflow: hidden;
+        border: 1px solid var(--hair);
+        background: var(--elevated);
+      }
+      .computer-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--hair);
+        background: var(--chrome);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--dim);
+      }
+      .computer-bar span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .computer-screen {
+        display: grid;
+        place-items: center;
+        height: 72px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--mute);
+      }
+      .attach-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        padding: 6px 10px;
+        border: 1px solid var(--hair);
+        background: var(--elevated);
+        font-size: 13px;
+      }
+      .composer-hint {
+        padding: 6px 10px 0;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--dim);
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        background: color-mix(in srgb, #000 42%, transparent);
+      }
+      .bottom-sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 11;
+        max-height: 74%;
+        overflow: auto;
+        padding: 0 16px 28px;
+        border-top: 1px solid var(--hair);
+        border-radius: 16px 16px 0 0;
+        background: var(--chrome);
+      }
+      .grabber {
+        width: 36px;
+        height: 4px;
+        margin: 8px auto 10px;
+        border-radius: 99px;
+        background: color-mix(in srgb, var(--ink) 22%, transparent);
+      }
+      .side-drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 11;
+        display: flex;
+        width: min(300px, 86%);
+        flex-direction: column;
+        overflow: auto;
+        border-left: 1px solid var(--hair);
+        background: var(--chrome);
+      }
+      .config-row {
+        display: flex;
+        width: 100%;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--hair);
+        text-align: left;
+      }
+
+      @media (max-height: 960px) {
+        .iphone-stage {
+          transform: scale(0.86);
+          transform-origin: top center;
+          padding-bottom: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <header class="sticky top-0 z-20 border-b hair bg-chrome/90 backdrop-blur-sm">
+      <div class="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-4 px-5 py-4">
+        <div>
+          <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-dim">Hermes Bot · prototypes</p>
+          <h1 class="font-display text-2xl leading-none text-ink">iPhone skins</h1>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex gap-1" id="theme-pills"></div>
+          <div class="ml-2 flex gap-1 border-l hair pl-3" id="mode-pills"></div>
+          <div class="ml-2 flex gap-1 border-l hair pl-3">
+            <button type="button" data-layout="phone" class="layout-btn px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider">
+              iPhone
+            </button>
+            <button type="button" data-layout="desktop" class="layout-btn px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider">
+              Desktop
+            </button>
+          </div>
+          <div class="ml-2 flex gap-1 border-l hair pl-3" id="config-pills"></div>
+        </div>
+      </div>
+      <p id="theme-note" class="mx-auto max-w-[1400px] px-5 pb-3 font-mono text-[11px] leading-relaxed text-dim"></p>
+    </header>
+
+    <main class="mx-auto max-w-[1400px] px-5 py-6">
+      <section class="mb-6 grid gap-3 sm:grid-cols-5" id="token-row"></section>
+
+      <section id="stage" class="overflow-hidden border hair bg-chrome shadow-nous" style="border-radius: var(--radius)"></section>
+    </main>
+
+    <script>
+      const THEMES = {
+        portal: {
+          label: "Portal",
+          note: {
+            light: "Default. Nous Blue / portal — cream #E8F2FD, ink #170D02, #0053FD. IBM Plex. 8px.",
+            dark: "Portal inverted — #071018 field, #4D8BFF accent, ice text. Same type and 8px.",
+          },
+          tokens: {
+            light: [
+              ["bg", "#E8F2FD"],
+              ["accent", "#0053FD"],
+              ["ink", "#170D02"],
+              ["radius", "8px"],
+              ["type", "IBM Plex"],
+            ],
+            dark: [
+              ["bg", "#071018"],
+              ["accent", "#4D8BFF"],
+              ["ink", "#E8F2FD"],
+              ["radius", "8px"],
+              ["type", "IBM Plex"],
+            ],
+          },
+        },
+        psyche: {
+          label: "Psyche",
+          note: {
+            light: "Nous glass light — #F8FAFF, psyche ink #0E2766, #0053FD. IBM Plex + Instrument Serif. 4px.",
+            dark: "Desktop psyche — cream #FFE6CB on #0E2766, #0053FD. IBM Plex. 4px.",
+          },
+          tokens: {
+            light: [
+              ["bg", "#F8FAFF"],
+              ["accent", "#0053FD"],
+              ["ink", "#0E2766"],
+              ["radius", "4px"],
+              ["type", "IBM Plex"],
+            ],
+            dark: [
+              ["bg", "#081633"],
+              ["accent", "#0053FD"],
+              ["cream", "#FFE6CB"],
+              ["radius", "4px"],
+              ["type", "IBM Plex"],
+            ],
+          },
+        },
+        teal: {
+          label: "Teal",
+          note: {
+            light: "Hermes Teal paper — #F6F1E6, ink #041C1C, deep teal accent. System + JetBrains. 8px.",
+            dark: "Dashboard Hermes Teal — #041C1C, cream #FFE6CB as accent. 8px.",
+          },
+          tokens: {
+            light: [
+              ["bg", "#F6F1E6"],
+              ["accent", "#0D4A44"],
+              ["ink", "#041C1C"],
+              ["radius", "8px"],
+              ["type", "System / JBM"],
+            ],
+            dark: [
+              ["bg", "#041C1C"],
+              ["accent", "#FFE6CB"],
+              ["glow", "#FFBD38"],
+              ["radius", "8px"],
+              ["type", "System / JBM"],
+            ],
+          },
+        },
+        mono: {
+          label: "Mono",
+          note: {
+            light: "Research paper — #F4F4F4, black ink, 0 radius, IBM Plex.",
+            dark: "Dashboard Mono — #0E0E0E, 0 radius, OUTPUT/SEED chrome.",
+          },
+          tokens: {
+            light: [
+              ["bg", "#F4F4F4"],
+              ["accent", "#0E0E0E"],
+              ["ink", "#0E0E0E"],
+              ["radius", "0"],
+              ["type", "IBM Plex"],
+            ],
+            dark: [
+              ["bg", "#0E0E0E"],
+              ["accent", "#EAEAEA"],
+              ["card", "#161618"],
+              ["radius", "0"],
+              ["type", "IBM Plex"],
+            ],
+          },
+        },
+        ember: {
+          label: "Ember",
+          note: {
+            light: "Forge paper — #FFF4EB, rust #C2410C. Newsreader + IBM Plex Mono. 4px.",
+            dark: "Dashboard Ember — #1A0A06, bronze cream, #F97316. 4px.",
+          },
+          tokens: {
+            light: [
+              ["bg", "#FFF4EB"],
+              ["accent", "#C2410C"],
+              ["ink", "#1A0A06"],
+              ["radius", "4px"],
+              ["type", "Newsreader"],
+            ],
+            dark: [
+              ["bg", "#1A0A06"],
+              ["accent", "#F97316"],
+              ["cream", "#FFD8B0"],
+              ["radius", "4px"],
+              ["type", "Newsreader"],
+            ],
+          },
+        },
+      };
+
+      const BOTS = [
+        {
+          id: "atlas",
+          name: "Atlas",
+          title: "Research",
+          preview: "Pulled three papers on distributed RL…",
+          time: "2m",
+          busy: true,
+          shape: "hex",
+          hue: "#0053fd",
+        },
+        {
+          id: "draft",
+          name: "Draft",
+          title: "Writing",
+          preview: "Tightened the intro. Want a colder cut?",
+          time: "18m",
+          busy: false,
+          shape: "blob",
+          hue: "#c47b3a",
+        },
+        {
+          id: "review",
+          name: "Review",
+          title: "Code",
+          preview: "Approval needed: apply git patch",
+          time: "1h",
+          busy: false,
+          shape: "box",
+          hue: "#3cb889",
+          needsYou: true,
+        },
+      ];
+
+      const GROUP = {
+        id: "room",
+        name: "Ship notes",
+        members: 2,
+        preview: "Atlas: I can outline; Draft writes.",
+        time: "4m",
+      };
+
+      let selected = "atlas";
+      let phoneSurface = "roster";
+      let sheet = null;
+      let recording = false;
+      let composerText = "";
+      let pendingAttach = null;
+      let restoreComposer = false;
+      let configOpen = false;
+      let configPlace = "screen";
+
+      function icon(name) {
+        const paths = {
+          plus: '<path d="M12 5v14M5 12h14"/>',
+          mic: '<path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>',
+          send: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+          stop: '<rect x="7" y="7" width="10" height="10" rx="1.5"/>',
+          gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M4.2 6.2l1.4 1.4M18.4 16.4l1.4 1.4M3 12h2M19 12h2M4.2 17.8l1.4-1.4M18.4 7.6l1.4-1.4"/>',
+          file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/>',
+          plugin: '<path d="M9 7V4M15 7V4M7 11h10v7a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z"/>',
+          monitor: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>',
+          think: '<circle cx="12" cy="12" r="7"/><path d="M9 12h.01M12 12h.01M15 12h.01"/>',
+          close: '<path d="M7 7l10 10M17 7L7 17"/>',
+        };
+        return `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name] || ""}</svg>`;
+      }
+
+      function face(bot) {
+        const r =
+          bot.shape === "box" ? "2px" : bot.shape === "hex" ? "6px 10px" : "40% 60% 50% 50%";
+        return `<span class="face scan border hair" style="background:${bot.hue}33;border-radius:${r};box-shadow:inset 0 0 0 1px ${bot.hue}66"></span>`;
+      }
+
+      function renderTokens(key) {
+        const mode = document.documentElement.dataset.mode;
+        const t = THEMES[key];
+        document.getElementById("token-row").innerHTML = t.tokens[mode]
+          .map(
+            ([k, v]) => `
+          <div class="border hair bg-sidebar px-3 py-2" style="border-radius: var(--radius)">
+            <p class="font-mono text-[10px] uppercase tracking-wider text-dim">${k}</p>
+            <p class="font-mono text-sm text-ink">${v}</p>
+          </div>`,
+          )
+          .join("");
+        document.getElementById("theme-note").textContent = t.note[mode];
+      }
+
+      function pillClass(on) {
+        return (
+          "px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider " +
+          (on ? "bg-accent text-bg" : "text-mute hover:text-ink")
+        );
+      }
+
+      function renderPills() {
+        const active = document.documentElement.dataset.theme;
+        const mode = document.documentElement.dataset.mode;
+        document.getElementById("theme-pills").innerHTML = Object.entries(THEMES)
+          .map(
+            ([key, t]) => `
+          <button type="button" data-theme="${key}"
+            class="${pillClass(key === active)}"
+            style="border-radius: var(--radius-chip)">${t.label}</button>`,
+          )
+          .join("");
+        document.getElementById("mode-pills").innerHTML = ["light", "dark"]
+          .map(
+            (m) => `
+          <button type="button" data-mode="${m}"
+            class="${pillClass(m === mode)}"
+            style="border-radius: var(--radius-chip)">${m}</button>`,
+          )
+          .join("");
+        document.querySelectorAll("#theme-pills [data-theme]").forEach((btn) => {
+          btn.onclick = () => {
+            document.documentElement.dataset.theme = btn.dataset.theme;
+            paint();
+          };
+        });
+        document.querySelectorAll("#mode-pills [data-mode]").forEach((btn) => {
+          btn.onclick = () => {
+            document.documentElement.dataset.mode = btn.dataset.mode;
+            paint();
+          };
+        });
+        document.querySelectorAll(".layout-btn").forEach((btn) => {
+          const on = document.documentElement.dataset.layout === btn.dataset.layout;
+          btn.className = "layout-btn " + pillClass(on);
+          btn.style.borderRadius = "var(--radius-chip)";
+          btn.onclick = () => {
+            document.documentElement.dataset.layout = btn.dataset.layout;
+            configPlace = btn.dataset.layout === "phone" ? "screen" : "sidebar";
+            paint();
+          };
+        });
+        document.getElementById("config-pills").innerHTML = [
+          ["screen", "Screen"],
+          ["sidebar", "Sidebar"],
+          ["sheet", "Sheet"],
+        ]
+          .map(
+            ([key, label]) => `
+          <button type="button" data-config="${key}"
+            class="${pillClass(key === configPlace)}"
+            style="border-radius: var(--radius-chip)">${label}</button>`,
+          )
+          .join("");
+        document.querySelectorAll("#config-pills [data-config]").forEach((btn) => {
+          btn.onclick = () => {
+            configPlace = btn.dataset.config;
+            paint();
+          };
+        });
+      }
+
+      function roster(compact) {
+        const bots = BOTS.map((b) => {
+          const on = selected === b.id;
+          return `
+          <button type="button" data-bot="${b.id}" class="flex w-full items-start gap-3 px-3 py-2.5 text-left ${
+            on ? "bg-elevated" : "hover:bg-elevated/50"
+          }">
+            ${face(b)}
+            <span class="min-w-0 flex-1">
+              <span class="flex items-baseline justify-between gap-2">
+                <span class="truncate text-sm font-medium text-ink">${b.name}</span>
+                <span class="font-mono text-[10px] text-dim">${b.time}</span>
+              </span>
+              <span class="block truncate font-mono text-[11px] text-dim">${b.title}</span>
+              <span class="mt-0.5 block truncate text-[13px] text-mute">${b.preview}</span>
+            </span>
+            ${b.needsYou ? '<span class="mt-1 h-1.5 w-1.5 rounded-full bg-warn"></span>' : ""}
+          </button>`;
+        }).join("");
+
+        return `
+          <aside class="${compact ? "w-full" : "w-[320px] shrink-0 border-r hair"} flex h-full flex-col bg-sidebar">
+            <div class="flex items-center gap-1 px-3 pt-3 font-mono text-[11px] uppercase tracking-wider">
+              <span class="px-2 py-1 text-dim">Sessions</span>
+              <span class="bg-elevated px-2 py-1 text-ink" style="border-radius: var(--radius)">Bots</span>
+            </div>
+            <div class="px-3 pt-3">
+              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-dim">Active now</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button type="button" data-bot="atlas" class="flex items-center gap-1.5 border hair bg-elevated px-2 py-1 text-[12px]" style="border-radius: var(--radius-chip)">
+                  <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"></span>
+                  Atlas
+                </button>
+              </div>
+            </div>
+            <div class="px-3 pt-3">
+              <input placeholder="Search bots" class="w-full border-0 border-b hair bg-transparent py-1.5 text-sm outline-none placeholder:text-dim" />
+            </div>
+            <div class="mt-2 flex-1 overflow-auto">
+              ${bots}
+              <button type="button" class="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-elevated/50">
+                <span class="flex -space-x-2">
+                  <span class="face border hair bg-accent/20" style="border-radius:40%"></span>
+                  <span class="face border hair bg-cream/20" style="border-radius:4px"></span>
+                </span>
+                <span class="min-w-0">
+                  <span class="flex justify-between gap-2">
+                    <span class="text-sm text-ink">${GROUP.name}</span>
+                    <span class="font-mono text-[10px] text-dim">${GROUP.time}</span>
+                  </span>
+                  <span class="block truncate text-[13px] text-mute">${GROUP.preview}</span>
+                </span>
+              </button>
+            </div>
+            <div class="border-t hair p-3">
+              <button type="button" class="w-full bg-accent py-2 text-center text-sm font-medium text-bg" style="border-radius: var(--radius)">
+                New agent
+              </button>
+            </div>
+          </aside>`;
+      }
+
+      function transcript(bot, compact) {
+        const bubble = compact ? "text-[17px] leading-snug" : "text-[15px] leading-relaxed";
+        return `
+          <div class="flex-1 space-y-4 overflow-auto px-4 py-4">
+            <div>
+              <p class="mb-1 text-right font-mono text-[10px] uppercase tracking-wider text-dim">You</p>
+              <p class="ml-10 bg-elevated px-3 py-2 ${bubble}" style="border-radius: 18px 18px 4px 18px">
+                Pull the last papers and draft a roster note. @Draft can write after.
+              </p>
+              <div class="mt-2 flex justify-end">
+                <span class="attach-chip" style="border-radius: var(--radius)">${icon("file")} brief.pdf</span>
+              </div>
+            </div>
+            <div class="tool-row">${icon("think")} Thinking · 3 steps</div>
+            <div class="tool-row"><i class="dot"></i> <b>web.search</b> · running</div>
+            <div class="tool-row">${icon("file")} <b>session.history</b> · 48 messages</div>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="chip" style="border-radius: var(--radius-chip)">@ browser</span>
+              <span class="chip" style="border-radius: var(--radius-chip)">/ web</span>
+            </div>
+            <div class="computer" style="border-radius: var(--radius)">
+              <div class="computer-bar">
+                <span>${icon("monitor")} Agent computer</span>
+                <span>browser</span>
+              </div>
+              <div class="computer-screen">arxiv.org · reading abstract</div>
+            </div>
+            <div>
+              <p class="mb-1 font-mono text-[10px] uppercase tracking-wider text-dim">${bot.name}</p>
+              <p class="mr-6 ${bubble} text-ink">
+                Three sources. File below is the extract. I will not change the host until you approve.
+              </p>
+            </div>
+            <button type="button" class="flex w-full items-center gap-3 border hair bg-elevated px-3 py-2.5 text-left" style="border-radius: var(--radius)">
+              ${icon("file")}
+              <span>
+                <span class="block text-[15px] text-ink">rl-notes.md</span>
+                <span class="font-mono text-[11px] text-dim">12 KB · created · preview</span>
+              </span>
+            </button>
+            <div class="bg-elevated px-3 py-3" style="border-radius: var(--radius)">
+              <p class="font-mono text-[10px] uppercase tracking-wider text-warn">Approval needed</p>
+              <p class="mt-1 ${compact ? "text-[15px]" : "text-sm"}">run web fetch on arxiv.org</p>
+              <div class="mt-3 flex gap-2">
+                <button class="flex-1 bg-accent py-2 text-[13px] text-bg" style="border-radius: var(--radius)">Allow</button>
+                <button class="flex-1 border hair py-2 text-[13px]" style="border-radius: var(--radius)">Always</button>
+                <button class="flex-1 py-2 text-[13px] text-mute" style="border-radius: var(--radius)">Deny</button>
+              </div>
+            </div>
+            <div class="bg-elevated px-3 py-3" style="border-radius: var(--radius)">
+              <p class="font-mono text-[10px] uppercase tracking-wider text-dim">Quick question</p>
+              <p class="mt-1 ${compact ? "text-[15px]" : "text-sm"}">Scope — last 7 days or last 30?</p>
+              <div class="mt-3 flex gap-2">
+                <button class="flex-1 border hair py-2 text-[15px]" style="border-radius: var(--radius)">7 days</button>
+                <button class="flex-1 border hair py-2 text-[15px]" style="border-radius: var(--radius)">30 days</button>
+              </div>
+            </div>
+            <div class="bg-elevated px-3 py-3" style="border-radius: var(--radius)">
+              <p class="font-mono text-[10px] uppercase tracking-wider text-warn">Secret needed</p>
+              <p class="mt-1 text-[15px]">API token for the papers host.</p>
+              <input type="password" placeholder="Secret value" class="mt-2 w-full bg-bg px-3 py-2 text-[15px] outline-none" style="border-radius: var(--radius)" />
+            </div>
+            ${
+              bot.needsYou
+                ? `<div class="bg-elevated px-3 py-3" style="border-radius: var(--radius)">
+                    <p class="font-mono text-[10px] uppercase tracking-wider text-warn">Sudo</p>
+                    <p class="mt-1 text-[15px]">Host wants a password to apply the patch.</p>
+                    <input type="password" placeholder="Password" class="mt-2 w-full bg-bg px-3 py-2 text-[15px] outline-none" style="border-radius: var(--radius)" />
+                  </div>`
+                : ""
+            }
+          </div>`;
+      }
+
+      function composerBar(bot) {
+        const empty = !composerText.trim();
+        const trailing = recording
+          ? `<button type="button" class="icon-btn rec" id="mic-btn" aria-label="Stop recording">${icon("stop")}</button>`
+          : empty
+            ? `<button type="button" class="icon-btn mic" id="mic-btn" aria-label="Record">${icon("mic")}</button>`
+            : `<button type="button" class="icon-btn send" id="send-btn" aria-label="Send">${icon("send")}</button>`;
+        const chip = pendingAttach
+          ? `<button type="button" class="attach-chip" id="detach-btn" style="border-radius: var(--radius)">
+              ${icon("file")} ${pendingAttach}
+              ${icon("close")}
+            </button>`
+          : "";
+        return `
+          <footer class="px-3 pt-1">
+            ${recording ? `<div class="rec-bar"><i></i> Recording · 0:04</div>` : ""}
+            ${chip}
+            <div class="composer-pill">
+              <button type="button" class="icon-btn plus" id="plus-btn" aria-label="Attach">${icon("plus")}</button>
+              <textarea id="composer-input" rows="1" placeholder="Message ${bot.name}">${composerText}</textarea>
+              ${trailing}
+            </div>
+            <p class="composer-hint">@ plugin · / skill</p>
+          </footer>`;
+      }
+
+      function attachSheet() {
+        return `
+          <div class="sheet">
+            <button type="button" class="row" id="attach-file">${icon("file")} Photo or file</button>
+            <button type="button" class="row" id="attach-plugin">${icon("plugin")} Add plugin / skill</button>
+            <button type="button" class="row text-dim" id="sheet-close">Cancel</button>
+          </div>`;
+      }
+
+      function configRows(bot) {
+        const rows = [
+          ["Model", "Inherit host"],
+          ["SOUL.md", "Edit"],
+          ["Skills & plugins", "web · browser"],
+          ["Approvals", "Always ask"],
+          ["Voice", "Off"],
+        ];
+        return `
+          <div class="flex items-center gap-3 py-3">
+            ${face(bot)}
+            <div>
+              <p class="text-[17px] font-medium leading-none">${bot.name}</p>
+              <p class="mt-1 font-mono text-[11px] text-dim">${bot.title}</p>
+            </div>
+          </div>
+          ${rows
+            .map(
+              ([label, value]) => `
+            <button type="button" class="config-row">
+              <span class="text-[15px] text-ink">${label}</span>
+              <span class="font-mono text-[12px] text-dim">${value}</span>
+            </button>`,
+            )
+            .join("")}`;
+      }
+
+      function configScreen(bot) {
+        return `
+          <section class="flex h-full min-w-0 flex-1 flex-col bg-bg pb-6">
+            <header class="grid grid-cols-[72px_1fr_72px] items-center border-b hair px-1 py-2">
+              <button type="button" id="config-back" class="justify-self-start px-2 text-[17px] text-accent">‹ Chat</button>
+              <p class="text-center text-[17px] font-semibold">Config</p>
+              <span></span>
+            </header>
+            <div class="flex-1 overflow-auto px-4">${configRows(bot)}</div>
+          </section>`;
+      }
+
+      function configSidebar(bot) {
+        return `
+          <aside class="flex h-full w-[280px] shrink-0 flex-col border-l hair bg-sidebar">
+            <header class="flex items-center justify-between px-4 py-3">
+              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-dim">${bot.name} · config</p>
+              <button type="button" class="icon-btn" id="config-close" aria-label="Close config">${icon("close")}</button>
+            </header>
+            <div class="flex-1 overflow-auto px-4">${configRows(bot)}</div>
+          </aside>`;
+      }
+
+      function configOverlay(bot) {
+        const layout = document.documentElement.dataset.layout;
+        const drawer = configPlace === "sidebar" && layout === "phone";
+        const sheetOn = configPlace === "sheet";
+        if (!configOpen || (!drawer && !sheetOn)) return "";
+        const panel = sheetOn
+          ? `<div class="bottom-sheet">
+              <div class="grabber"></div>
+              <header class="mb-1 flex items-center justify-between">
+                <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-dim">${bot.name} · config</p>
+                <button type="button" class="text-[15px] text-accent" id="config-close">Done</button>
+              </header>
+              ${configRows(bot)}
+            </div>`
+          : `<div class="side-drawer">
+              <header class="flex items-center justify-between px-4 py-3">
+                <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-dim">${bot.name} · config</p>
+                <button type="button" class="icon-btn" id="config-close" aria-label="Close config">${icon("close")}</button>
+              </header>
+              <div class="px-4">${configRows(bot)}</div>
+            </div>`;
+        return `<div class="scrim" id="config-scrim"></div>${panel}`;
+      }
+
+      function openConfig() {
+        configOpen = true;
+        sheet = null;
+        if (document.documentElement.dataset.layout === "phone" && configPlace === "screen") {
+          phoneSurface = "config";
+        }
+        paint();
+      }
+
+      function closeConfig() {
+        configOpen = false;
+        if (phoneSurface === "config") phoneSurface = "chat";
+        paint();
+      }
+
+      function chat() {
+        const bot = BOTS.find((b) => b.id === selected);
+        return `
+          <section class="relative flex min-w-0 flex-1 flex-col bg-bg">
+            <header class="flex items-center justify-between border-b hair px-4 py-3">
+              <div class="flex items-center gap-3">
+                ${face(bot)}
+                <div>
+                  <p class="text-sm font-medium leading-none">${bot.name}</p>
+                  <p class="mt-1 font-mono text-[11px] text-dim">Forever chat · ${bot.title}</p>
+                </div>
+              </div>
+              <button type="button" class="icon-btn" id="settings-btn" aria-label="Agent settings">${icon("gear")}</button>
+            </header>
+            ${transcript(bot, false)}
+            ${sheet === "attach" ? attachSheet() : ""}
+            ${composerBar(bot)}
+          </section>`;
+      }
+
+      function statusBar() {
+        return `
+          <div class="status-bar text-ink">
+            <span>9:41</span>
+            <span class="island" aria-hidden="true"></span>
+            <span class="justify-self-end font-mono text-[12px] font-medium tracking-tight">●●●● Wi‑Fi</span>
+          </div>`;
+      }
+
+      function iphone(inner) {
+        return `
+          <div class="iphone-stage">
+            <div>
+              <p class="mb-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-dim">iPhone 16 · 393 × 852</p>
+              <div class="iphone">
+                <div class="iphone-screen">
+                  ${statusBar()}
+                  <div class="flex min-h-0 flex-1 flex-col">${inner}</div>
+                  <div class="home-ind"></div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      function rosterMobile() {
+        const bots = BOTS.map((b) => {
+          const on = selected === b.id;
+          return `
+          <button type="button" data-bot="${b.id}" class="flex w-full items-center gap-3 px-4 py-3 text-left ${
+            on ? "bg-elevated" : ""
+          }">
+            ${face(b)}
+            <span class="min-w-0 flex-1">
+              <span class="flex items-baseline justify-between gap-2">
+                <span class="truncate text-[17px] font-medium text-ink">${b.name}</span>
+                <span class="font-mono text-[11px] text-dim">${b.time}</span>
+              </span>
+              <span class="mt-0.5 block truncate text-[15px] text-mute">${b.preview}</span>
+            </span>
+            ${b.needsYou ? '<span class="h-2 w-2 rounded-full bg-warn"></span>' : ""}
+          </button>`;
+        }).join("");
+
+        return `
+          <div class="flex h-full flex-col bg-bg pb-6">
+            <div class="flex items-end justify-between px-4 pb-2 pt-1">
+              <h1 class="font-display text-[34px] leading-none tracking-tight">Bots</h1>
+              <button type="button" class="text-[17px] font-medium text-accent">New</button>
+            </div>
+            <div class="px-4 pb-2">
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" data-bot="atlas" class="flex items-center gap-1.5 bg-elevated px-2.5 py-1 text-[13px]" style="border-radius: var(--radius-chip)">
+                  <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"></span>
+                  Atlas
+                </button>
+              </div>
+            </div>
+            <div class="px-4 pb-2">
+              <input placeholder="Search" class="w-full rounded-theme bg-elevated px-3 py-2 text-[15px] outline-none placeholder:text-dim" />
+            </div>
+            <div class="flex-1 overflow-auto">
+              ${bots}
+              <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left">
+                <span class="flex -space-x-2">
+                  <span class="face border hair bg-accent/20" style="border-radius:40%"></span>
+                  <span class="face border hair bg-cream/20" style="border-radius:4px"></span>
+                </span>
+                <span class="min-w-0">
+                  <span class="flex justify-between">
+                    <span class="text-[17px] text-ink">${GROUP.name}</span>
+                    <span class="font-mono text-[11px] text-dim">${GROUP.time}</span>
+                  </span>
+                  <span class="block truncate text-[15px] text-mute">${GROUP.preview}</span>
+                </span>
+              </button>
+            </div>
+          </div>`;
+      }
+
+      function chatMobile() {
+        const bot = BOTS.find((b) => b.id === selected);
+        return `
+          <section class="relative flex h-full flex-col bg-bg pb-6">
+            <header class="grid grid-cols-[72px_1fr_72px] items-center border-b hair px-1 py-2">
+              <button type="button" id="phone-back" class="justify-self-start px-2 text-[17px] text-accent">‹ Bots</button>
+              <div class="text-center">
+                <p class="text-[17px] font-semibold leading-none">${bot.name}</p>
+                <p class="mt-1 font-mono text-[10px] text-dim">${bot.title}</p>
+              </div>
+              <button type="button" class="icon-btn justify-self-end" id="settings-btn" aria-label="Agent settings">${icon("gear")}</button>
+            </header>
+            ${transcript(bot, true)}
+            ${sheet === "attach" ? attachSheet() : ""}
+            ${composerBar(bot)}
+            ${configOverlay(bot)}
+          </section>`;
+      }
+
+      function routines() {
+        return `
+          <aside class="hidden w-[260px] shrink-0 border-l hair bg-sidebar lg:flex lg:flex-col">
+            <div class="px-4 py-3">
+              <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-dim">Routines</p>
+              <p class="mt-1 text-sm text-ink">Docks only while Bots is active</p>
+            </div>
+            <button class="mx-3 border hair px-3 py-2 text-left" style="border-radius: var(--radius)">
+              <p class="text-sm">Morning papers</p>
+              <p class="font-mono text-[11px] text-dim">daily 07:00 · Atlas</p>
+            </button>
+          </aside>`;
+      }
+
+      function paint() {
+        renderPills();
+        renderTokens(document.documentElement.dataset.theme);
+        const layout = document.documentElement.dataset.layout;
+        const stage = document.getElementById("stage");
+        const bot = BOTS.find((b) => b.id === selected);
+        if (layout === "phone") {
+          if (configOpen && configPlace === "screen") phoneSurface = "config";
+          else if (phoneSurface === "config") phoneSurface = "chat";
+          const inner =
+            phoneSurface === "config"
+              ? configScreen(bot)
+              : phoneSurface === "chat"
+                ? chatMobile()
+                : rosterMobile();
+          stage.innerHTML = iphone(inner);
+        } else {
+          const chatCol = configOpen && configPlace === "screen" ? configScreen(bot) : chat();
+          const rail = configOpen && configPlace === "sidebar" ? configSidebar(bot) : routines();
+          stage.innerHTML = `
+            <div class="relative flex h-[720px]">
+              ${roster(false)}
+              ${chatCol}
+              ${rail}
+              ${configOverlay(bot)}
+            </div>`;
+        }
+        stage.querySelectorAll("[data-bot]").forEach((el) => {
+          el.onclick = () => {
+            selected = el.dataset.bot;
+            if (document.documentElement.dataset.layout === "phone") {
+              phoneSurface = "chat";
+              if (configPlace === "screen") configOpen = false;
+            }
+            paint();
+          };
+        });
+        const back = document.getElementById("phone-back");
+        if (back) {
+          back.onclick = () => {
+            phoneSurface = "roster";
+            sheet = null;
+            recording = false;
+            configOpen = false;
+            paint();
+          };
+        }
+        const plus = document.getElementById("plus-btn");
+        if (plus) {
+          plus.onclick = () => {
+            sheet = sheet === "attach" ? null : "attach";
+            paint();
+          };
+        }
+        const settings = document.getElementById("settings-btn");
+        if (settings) {
+          settings.onclick = () => {
+            if (configOpen) closeConfig();
+            else openConfig();
+          };
+        }
+        const configBack = document.getElementById("config-back");
+        if (configBack) configBack.onclick = closeConfig;
+        const configClose = document.getElementById("config-close");
+        if (configClose) configClose.onclick = closeConfig;
+        const configScrim = document.getElementById("config-scrim");
+        if (configScrim) configScrim.onclick = closeConfig;
+        const closeSheet = document.getElementById("sheet-close");
+        if (closeSheet) {
+          closeSheet.onclick = () => {
+            sheet = null;
+            paint();
+          };
+        }
+        const mic = document.getElementById("mic-btn");
+        if (mic) {
+          mic.onclick = () => {
+            recording = !recording;
+            if (recording) sheet = null;
+            paint();
+          };
+        }
+        const send = document.getElementById("send-btn");
+        if (send) {
+          send.onclick = () => {
+            composerText = "";
+            pendingAttach = null;
+            sheet = null;
+            paint();
+          };
+        }
+        const attachFile = document.getElementById("attach-file");
+        if (attachFile) {
+          attachFile.onclick = () => {
+            pendingAttach = "brief.pdf";
+            sheet = null;
+            paint();
+          };
+        }
+        const attachPlugin = document.getElementById("attach-plugin");
+        if (attachPlugin) {
+          attachPlugin.onclick = () => {
+            openConfig();
+          };
+        }
+        const detach = document.getElementById("detach-btn");
+        if (detach) {
+          detach.onclick = () => {
+            pendingAttach = null;
+            paint();
+          };
+        }
+        const input = document.getElementById("composer-input");
+        if (input) {
+          input.oninput = () => {
+            const wasEmpty = !composerText.trim();
+            composerText = input.value;
+            const isEmpty = !composerText.trim();
+            if (wasEmpty !== isEmpty && !recording) {
+              restoreComposer = true;
+              paint();
+            }
+          };
+          if (restoreComposer) {
+            input.focus();
+            input.selectionStart = input.selectionEnd = input.value.length;
+            restoreComposer = false;
+          }
+        }
+      }
+
+      paint();
+    </script>
+  </body>
+</html>

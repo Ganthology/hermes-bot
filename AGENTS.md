@@ -11,6 +11,7 @@ Read [docs/onboarding.md](docs/onboarding.md). Skill: [.cursor/skills/onboard-he
 | Need | Go here |
 |------|---------|
 | Setup / try the app | [docs/onboarding.md](docs/onboarding.md), [README.md](README.md) |
+| UI / themes | [prototypes/themes/index.html](prototypes/themes/index.html) — HTML+CSS first, then [`src/theme.ts`](src/theme.ts) |
 | Product language | [docs/glossary.md](docs/glossary.md) |
 | Architecture decisions (ADRs) | [docs/adr/README.md](docs/adr/README.md) |
 | Commit shape | [.cursor/rules/commit-scope.mdc](.cursor/rules/commit-scope.mdc) |
