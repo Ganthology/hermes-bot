@@ -1,11 +1,13 @@
 import { isDictationStubEnabled } from './config';
 import { CloudProvider } from './providers/cloud';
+import { OnDeviceProvider } from './providers/onDevice';
 import { StubProvider } from './providers/stub';
 import { UnavailableProvider } from './providers/unavailable';
 import type { DictationCatalogEntry, DictationProvider } from './types';
 import {
   loadCloudSttConfig,
   loadDictationProviderPreference,
+  loadOnDeviceModelId,
   type DictationProviderPreference,
 } from '../storage/dictationCloud';
 
@@ -15,7 +17,7 @@ let hydrated = false;
 
 /**
  * Load Secure Store preference before resolve. Safe to call repeatedly.
- * Settings should call this after save so the composer picks up Cloud.
+ * Settings should call this after save so the composer picks up the engine.
  */
 export async function hydrateDictationPreference(): Promise<void> {
   preference = await loadDictationProviderPreference();
@@ -23,11 +25,13 @@ export async function hydrateDictationPreference(): Promise<void> {
   cached = null;
 }
 
-/** Active engine. Prefer Cloud when the user selected it in Settings. */
+/** Active engine. Prefer the user's Settings selection when set. */
 export function resolveDictationProvider(): DictationProvider {
   if (!cached) {
     if (preference === 'cloud') {
       cached = new CloudProvider(loadCloudSttConfig);
+    } else if (preference === 'on_device') {
+      cached = new OnDeviceProvider(loadOnDeviceModelId);
     } else if (isDictationStubEnabled()) {
       cached = new StubProvider();
     } else {
@@ -51,8 +55,8 @@ export const DICTATION_CATALOG: DictationCatalogEntry[] = [
   {
     id: 'on_device',
     label: 'On-device Whisper',
-    blurb: 'Runs locally on the phone. Coming in a follow-up PR.',
-    available: false,
+    blurb: 'Download a small Whisper model and run locally. Audio never leaves the phone.',
+    available: true,
   },
   {
     id: 'cloud',
