@@ -53,12 +53,30 @@ npm install
 npx expo start
 ```
 
-Then open in Expo Go / simulator (`i` / `a`), or scan the QR code.
+Then open in a **development build** / simulator (`i` / `a`). Streaming markdown needs native modules (see below) — Expo Go is not enough for chat rendering once those are installed.
 
 ```bash
 npm run typecheck
 npm run lint
 ```
+
+### Streaming markdown (assistant)
+
+Assistant bubbles use Software Mansion [`react-native-streamdown`](https://github.com/software-mansion-labs/react-native-streamdown) (`StreamdownText`): incomplete-stream repair via `remend` on a worklet thread, rendered with [`react-native-enriched-markdown`](https://github.com/software-mansion-labs/react-native-enriched-markdown) and its `streamingAnimation`. Live tokens come from TUI `message.delta`; `message.complete` freezes the bubble. User bubbles stay plain text.
+
+**Expo Go vs dev client:** `react-native-enriched-markdown` (and Streamdown’s Bundle Mode worklets setup) require a custom native build. They do **not** run in Expo Go. Use:
+
+```bash
+npx expo install expo-dev-client
+npx expo prebuild
+npx expo run:ios   # or: npx expo run:android
+```
+
+Babel enables worklets Bundle Mode with `importForwarding.moduleNames: ['remend']` (worklets **0.10** API; older docs called this `workletizableModules`). Metro watches `node_modules/react-native-worklets/.worklets` via `getBundleModeMetroConfig`.
+
+If Bundle Mode were unavailable, the lightest OSS fallback that still does real streaming markdown on RN would be `EnrichedMarkdownText` + `remend` on the JS thread with `streamingAnimation` — still not Expo Go, and not a timer fake-typewriter.
+
+Turn activity (honest working caption, collapsible reasoning, tool rows) follows gateway events verified against hermes-agent: `thinking.delta`, `reasoning.delta`, `status.update`, `tool.start` / `tool.progress` / `tool.generating` / `tool.complete`. Interactive approval/clarify/sudo/secret cards are unchanged.
 
 ### First run
 
@@ -66,7 +84,7 @@ npm run lint
 2. Paste an **auth / dashboard session token**.
 3. Tap **Connect**. Credentials are stored in **expo-secure-store** (no Hermes Bot account system).
 4. Tap **New agent** → name + one-line “what it is for”.
-5. Open the agent and send a message. Assistant text streams from `message.delta` when the gateway is up.
+5. Open the agent and send a message. Assistant markdown streams from `message.delta` when the gateway is up.
 6. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
 
 ### Auth notes
@@ -83,12 +101,13 @@ npm run lint
 | Home | Named agent list, empty state, New agent |
 | New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
 | Chat | Composer, message list, SQLite cache, reconcile via `session.history` / resume |
-| Streaming | TUI JSON-RPC over `/api/ws` |
+| Streaming | TUI JSON-RPC over `/api/ws`; assistant markdown via StreamdownText |
+| Activity | Thinking / reasoning / tool progress when the host emits it; otherwise “Working…” while the turn is in flight |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 
 RPC used: `session.create`, `session.list` (debug only), `session.resume`, `session.history`, `prompt.submit`, `approval.respond`, `clarify.respond`, `sudo.respond`, `secret.respond`.
 
-Stream events: `message.delta`, `message.complete`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
+Stream events: `message.start`, `message.delta`, `message.complete`, `thinking.delta`, `reasoning.delta`, `status.update`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
 
 There is **no `/new` in the bot chat** — forking the relationship is out of scope for v1. Compression is assumed **in-place** (same session id).
 

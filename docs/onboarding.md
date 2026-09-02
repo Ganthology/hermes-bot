@@ -21,7 +21,15 @@ npm run lint
 npx expo start
 ```
 
-Expo Go or press `i` / `a`. Physical device + custom native modules: `npx expo install expo-dev-client` then `npx expo run:ios --device` (or Android). Prebuild generates `/ios` and `/android` — those folders stay gitignored.
+Streaming markdown (`react-native-streamdown` / `react-native-enriched-markdown`) needs a **dev client**, not Expo Go:
+
+```bash
+npx expo install expo-dev-client
+npx expo prebuild
+npx expo run:ios   # or Android
+```
+
+Prebuild generates `/ios` and `/android` — those folders stay gitignored. Press `i` / `a` once the native app is installed.
 
 ## Host setup (not in this repo)
 
