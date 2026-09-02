@@ -1,4 +1,4 @@
-/** Speech-to-text engine used by the composer mic. Cloud / on-device land in follow-up PRs. */
+/** Speech-to-text engine used by the composer mic. On-device Whisper lands in a follow-up PR. */
 
 export type TranscribeSource =
   | { kind: 'uri'; uri: string }
@@ -46,7 +46,7 @@ export class DictationError extends Error {
 
 export type DictationPhase = 'idle' | 'recording' | 'transcribing';
 
-/** Future engines listed in Settings (greyed until follow-up PRs). */
+/** Engines listed in Settings. `available: false` stays greyed follow-up. */
 export type DictationCatalogEntry = {
   id: DictationProviderId;
   label: string;

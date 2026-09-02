@@ -35,13 +35,34 @@ Voice-to-text on the chat composer — **not** voice-to-voice, and **not** a Her
 
 | PR | Ships |
 |----|--------|
-| **1 (this)** | Mic UI (tap record → stop → transcribe → **send**), level meter, cancel, `DictationProvider` interface, unavailable / demo stub |
-| **2** | Cloud STT HTTP client (OpenAI / Groq-style) |
+| **1** | Mic UI (tap record → stop → transcribe → **send**), level meter, cancel, `DictationProvider` interface, unavailable / demo stub |
+| **2 (this)** | Cloud STT HTTP client (Groq Whisper / OpenAI whisper & gpt-4o-*-transcribe) |
 | **3** | On-device Whisper download + inference |
 
-Dev default uses a **demo stub** so the chrome is reviewable without a model (`EXPO_PUBLIC_DICTATION_STUB=0` forces the friendly “no engine yet” path). Settings → Dictation lists On-device / Cloud / Hermes host as greyed follow-ups.
+Flow: tap **Mic** → speak → **Stop** → provider transcribes → text **sends immediately** on the same path as Send (never parks in the composer). **Cancel** discards audio.
 
-**Permissions:** `expo-audio` config plugin writes iOS `NSMicrophoneUsageDescription` and Android `RECORD_AUDIO`. Recording works in **Expo Go** for this UI PR. A later on-device Whisper native module will need a **dev client** / `npx expo prebuild` + `npx expo run:ios` / `run:android` — remind yourself to prebuild when that lands.
+### Cloud STT (PR 2)
+
+The phone calls the provider directly (`POST …/audio/transcriptions`). Keys stay in **expo-secure-store** — Hermes Bot does not proxy or host STT.
+
+1. Open **Settings → Dictation** → select **Cloud API**
+2. Pick **Groq Whisper** or **OpenAI**
+3. Paste an API key → optionally override model / base URL → **Save cloud dictation**
+
+| Engine | Default model | Default base URL |
+|--------|---------------|------------------|
+| Groq | `whisper-large-v3-turbo` | `https://api.groq.com/openai/v1` |
+| OpenAI | `gpt-4o-mini-transcribe` | `https://api.openai.com/v1` |
+
+Suggested OpenAI models you can tap or type: `gpt-4o-mini-transcribe`, `gpt-4o-transcribe`, `whisper-1`. Groq: `whisper-large-v3-turbo`, `whisper-large-v3`. Base URL is optional for OpenAI-compatible STT hosts.
+
+**Keys:** create a Groq key at [console.groq.com](https://console.groq.com) or an OpenAI key at [platform.openai.com](https://platform.openai.com). Never commit keys. Clear via **Clear cloud key** in Settings.
+
+Without a saved cloud engine, `__DEV__` still uses the **demo stub** (`EXPO_PUBLIC_DICTATION_STUB=0` → friendly “none yet”). On-device Whisper stays greyed (PR 3).
+
+**Hermes host STT:** the TUI gateway methods this client uses have **no documented speech-to-text RPC**, so “use host STT” is not invented here — the Settings row stays a follow-up.
+
+**Permissions:** `expo-audio` config plugin writes iOS `NSMicrophoneUsageDescription` and Android `RECORD_AUDIO`. Recording works in **Expo Go** for cloud STT (plain HTTPS). A later on-device Whisper native module will need a **dev client** / `npx expo prebuild` + `npx expo run:ios` / `run:android` — remind yourself to prebuild when that lands.
 
 ## Glossary and ADRs
 
@@ -97,7 +118,7 @@ npm run lint
 | Home | Named agent list, empty state, New agent |
 | New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
 | Chat | Composer, message list, SQLite cache, reconcile via `session.history` / resume |
-| Dictation | Tap Mic → record → Stop → stub/unavailable transcribe → send as a normal prompt (engines in follow-ups) |
+| Dictation | Tap Mic → record → Stop → cloud (or stub) transcribe → send as a normal prompt; Settings holds the API key |
 | Streaming | TUI JSON-RPC over `/api/ws` |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 

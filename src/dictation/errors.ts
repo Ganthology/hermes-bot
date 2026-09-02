@@ -4,7 +4,7 @@ const MESSAGES: Record<DictationErrorCode, string> = {
   permission: 'Microphone access is off. Enable it in system Settings to dictate.',
   too_short: 'That was too short to transcribe. Tap the mic, speak, then tap stop.',
   no_provider:
-    'Pick a dictation engine in a follow-up — cloud STT and on-device Whisper are next.',
+    'Pick Cloud in Settings → Dictation and add a Groq or OpenAI API key.',
   failed: 'Could not transcribe that recording. Try again.',
   cancelled: 'Dictation cancelled.',
 };

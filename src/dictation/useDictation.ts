@@ -9,8 +9,11 @@ import {
 } from 'expo-audio';
 
 import { toDictationError, humanDictationMessage } from './errors';
-import { resolveDictationProvider } from './resolveProvider';
-import { DictationError, type DictationPhase } from './types';
+import {
+  hydrateDictationPreference,
+  resolveDictationProvider,
+} from './resolveProvider';
+import { DictationError, type DictationPhase, type DictationProvider } from './types';
 
 const MIN_DURATION_MS = 400;
 
@@ -54,7 +57,7 @@ export function useDictation(options: {
   disabled?: boolean;
 }): UseDictationResult {
   const { onTranscript, disabled = false } = options;
-  const provider = useMemo(() => resolveDictationProvider(), []);
+  const [provider, setProvider] = useState<DictationProvider>(() => resolveDictationProvider());
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 80);
 
@@ -71,6 +74,14 @@ export function useDictation(options: {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      try {
+        await hydrateDictationPreference();
+        if (!cancelled) {
+          setProvider(resolveDictationProvider());
+        }
+      } catch {
+        // Keep the sync default (stub / unavailable) if Secure Store fails.
+      }
       try {
         const status = await getRecordingPermissionsAsync();
         if (!cancelled) {
