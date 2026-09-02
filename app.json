@@ -15,10 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.hermesbot.ios"
+      "bundleIdentifier": "app.hermesbot.ios",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Allow Hermes Bot to record audio for dictation."
+      }
     },
     "android": {
       "package": "app.hermesbot.android",
+      "permissions": ["RECORD_AUDIO"],
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -34,7 +38,15 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Hermes Bot to record audio for dictation.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
