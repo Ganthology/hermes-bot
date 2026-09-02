@@ -9,6 +9,19 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 
+import {
+  applyReasoningDelta,
+  applyStatusUpdate,
+  applyThinkingDelta,
+  applyToolComplete,
+  applyToolGenerating,
+  applyToolProgress,
+  applyToolStart,
+  beginTurn,
+  emptyTurnActivity,
+  endTurn,
+  type TurnActivityState,
+} from '../../src/chat/turnActivity';
 import { Composer } from '../../src/components/Composer';
 import { MessageList } from '../../src/components/MessageList';
 import { ErrorBanner } from '../../src/components/ui';
@@ -63,6 +76,7 @@ export default function AgentChatScreen() {
   const [sending, setSending] = useState(false);
   const [responding, setResponding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<TurnActivityState>(() => emptyTurnActivity());
 
   const streamingIdRef = useRef<string | null>(null);
   const liveSessionRef = useRef<string | null>(null);
@@ -117,21 +131,72 @@ export default function AgentChatScreen() {
           : {};
 
       switch (event.type) {
+        case 'message.start': {
+          setActivity((prev) => beginTurn(prev));
+          break;
+        }
         case 'message.delta': {
+          // Prefer text — rendered is TUI ANSI, not markdown source.
           const text = coerceText(payload.text ?? payload.content ?? payload.delta);
           if (text) {
+            setActivity((prev) => (prev.active ? prev : beginTurn(prev)));
             void upsertStreaming(agentId, text, false);
           }
           break;
         }
         case 'message.complete': {
+          const alreadyStreamed = payload.already_streamed === true;
           const text = coerceText(payload.text ?? payload.content);
-          if (text && !streamingIdRef.current) {
+          if (!alreadyStreamed && text && !streamingIdRef.current) {
             void upsertStreaming(agentId, text, true);
           } else if (streamingIdRef.current) {
             void upsertStreaming(agentId, '', true);
           }
+          setActivity(endTurn());
           setSending(false);
+          break;
+        }
+        case 'thinking.delta': {
+          // Status caption only — not model reasoning (see hermes-agent thinking_callback).
+          setActivity((prev) => applyThinkingDelta(prev, coerceText(payload.text)));
+          break;
+        }
+        case 'reasoning.delta':
+        case 'reasoning.available': {
+          setActivity((prev) => applyReasoningDelta(prev, coerceText(payload.text)));
+          break;
+        }
+        case 'status.update': {
+          const kind = typeof payload.kind === 'string' ? payload.kind : null;
+          const text = coerceText(payload.text) || null;
+          setActivity((prev) => applyStatusUpdate(prev, kind, text));
+          break;
+        }
+        case 'tool.start': {
+          const toolId = coerceText(payload.tool_id);
+          const name = coerceText(payload.name) || 'tool';
+          const preview = coerceText(payload.args_text || payload.context) || undefined;
+          setActivity((prev) => applyToolStart(prev, toolId, name, preview));
+          break;
+        }
+        case 'tool.progress': {
+          const name = coerceText(payload.name) || null;
+          const preview = coerceText(payload.preview) || null;
+          setActivity((prev) => applyToolProgress(prev, name, preview));
+          break;
+        }
+        case 'tool.generating': {
+          const name = coerceText(payload.name) || 'tool';
+          setActivity((prev) => applyToolGenerating(prev, name));
+          break;
+        }
+        case 'tool.complete': {
+          const toolId = coerceText(payload.tool_id);
+          const name = coerceText(payload.name) || 'tool';
+          const summary =
+            coerceText(payload.summary || payload.result_text) || undefined;
+          const err = coerceText(payload.error) || undefined;
+          setActivity((prev) => applyToolComplete(prev, toolId, name, summary, err));
           break;
         }
         case 'approval.request':
@@ -163,14 +228,10 @@ export default function AgentChatScreen() {
           setInteractive((prev) => prev.filter((p) => p.requestId !== expiredId));
           break;
         }
-        case 'tool.start':
-        case 'tool.progress':
-        case 'tool.complete':
-          // Visible later; v1 keeps the transcript focused on chat text + cards.
-          break;
         case 'error': {
           const message = coerceText(payload.message ?? payload.error ?? 'Gateway error');
           setError(message || 'Gateway error');
+          setActivity(endTurn());
           setSending(false);
           break;
         }
@@ -260,6 +321,7 @@ export default function AgentChatScreen() {
     setError(null);
     setSending(true);
     streamingIdRef.current = null;
+    setActivity((prev) => beginTurn(prev));
     try {
       const gw = await ensureConnected();
       let sid = liveSessionRef.current;
@@ -283,6 +345,7 @@ export default function AgentChatScreen() {
       await promptSubmit(gw, { session_id: sid, text });
     } catch (err) {
       setSending(false);
+      setActivity(endTurn());
       setError(err instanceof Error ? err.message : 'Send failed');
     }
   };
@@ -348,6 +411,7 @@ export default function AgentChatScreen() {
           interactive={interactive}
           responding={responding}
           onRespond={onRespond}
+          activity={activity}
         />
       )}
 
