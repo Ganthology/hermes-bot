@@ -304,6 +304,8 @@
 
       /* iPhone 16 logical points — 393 × 852 */
       .iphone {
+        display: flex;
+        flex-direction: column;
         width: 393px;
         height: 852px;
         padding: 11px;
@@ -317,8 +319,9 @@
       .iphone-screen {
         position: relative;
         display: flex;
+        flex: 1 1 0;
+        min-height: 0;
         flex-direction: column;
-        height: 100%;
         overflow: hidden;
         border-radius: 46px;
         background: var(--bg);
@@ -328,6 +331,7 @@
         display: grid;
         grid-template-columns: 1fr auto 1fr;
         align-items: center;
+        flex-shrink: 0;
         height: 54px;
         padding: 14px 28px 0;
         font-family: var(--font-sans);
@@ -582,17 +586,12 @@
         text-align: left;
       }
 
-      .phone-col {
-        display: flex;
-        min-height: 0;
-        flex: 1;
-        flex-direction: column;
-      }
+      .phone-col,
       .phone-surface {
         position: relative;
         display: flex;
+        flex: 1 1 0;
         min-height: 0;
-        flex: 1;
         flex-direction: column;
       }
 
@@ -738,7 +737,7 @@
 
       .tab-bar {
         display: grid;
-        flex-shrink: 0;
+        flex: 0 0 auto;
         grid-template-columns: 1fr 1fr;
         z-index: 6;
       }
@@ -786,12 +785,14 @@
         background: color-mix(in srgb, var(--accent) 18%, transparent);
       }
 
-      .android-stage {
+      .pixel-stage {
         display: flex;
         justify-content: center;
         padding: 28px 16px 40px;
       }
-      .android {
+      .pixel {
+        display: flex;
+        flex-direction: column;
         width: 412px;
         height: 892px;
         padding: 10px;
@@ -801,25 +802,27 @@
           0 0 0 1px #2a2a2a,
           0 24px 60px -20px color-mix(in srgb, #000 55%, transparent);
       }
-      .android-screen {
+      .pixel-screen {
         position: relative;
         display: flex;
+        flex: 1 1 0;
+        min-height: 0;
         flex-direction: column;
-        height: 100%;
         overflow: hidden;
         border-radius: 28px;
         background: var(--bg);
       }
-      .android-status {
+      .pixel-status {
         display: flex;
         align-items: center;
         justify-content: space-between;
         height: 36px;
+        flex-shrink: 0;
         padding: 8px 22px 0;
         font-size: 13px;
         font-weight: 600;
       }
-      .android-nav {
+      .pixel-nav {
         position: absolute;
         bottom: 8px;
         left: 50%;
@@ -832,7 +835,7 @@
 
       @media (max-height: 960px) {
         .iphone-stage,
-        .android-stage {
+        .pixel-stage {
           transform: scale(0.86);
           transform-origin: top center;
           padding-bottom: 0;
@@ -1370,7 +1373,7 @@
 
       function configScreen(bot) {
         return `
-          <section class="relative flex h-full min-w-0 flex-1 flex-col bg-bg">
+          <section class="relative flex min-h-0 min-w-0 flex-1 flex-col bg-bg">
             <div class="overlay-header">
               <button type="button" class="float-btn" id="config-back" aria-label="Back to chat">${icon("back")}</button>
               <span></span>
@@ -1461,7 +1464,7 @@
       function statusBar() {
         if (isAndroid()) {
           return `
-          <div class="android-status text-ink">
+          <div class="pixel-status text-ink">
             <span>9:41</span>
             <span class="font-mono text-[11px] font-medium tracking-tight">5G  ▮▮▮</span>
           </div>`;
@@ -1502,13 +1505,13 @@
           </div>`;
         if (isAndroid()) {
           return `
-          <div class="android-stage">
+          <div class="pixel-stage">
             <div>
               <p class="mb-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-dim">Pixel · 412 × 892</p>
-              <div class="android">
-                <div class="android-screen">
+              <div class="pixel">
+                <div class="pixel-screen">
                   ${body}
-                  <div class="android-nav"></div>
+                  <div class="pixel-nav"></div>
                 </div>
               </div>
             </div>
@@ -1550,7 +1553,7 @@
 
       function rosterMobile() {
         return `
-          <div class="relative flex h-full flex-col bg-bg">
+          <div class="relative flex min-h-0 flex-1 flex-col bg-bg">
             <div class="overlay-header">
               <span></span>
               <div class="flex items-center gap-2">
@@ -1594,7 +1597,7 @@
       function chatMobile() {
         const bot = BOTS.find((b) => b.id === selected);
         return `
-          <section class="relative flex h-full flex-col bg-bg">
+          <section class="relative flex min-h-0 flex-1 flex-col bg-bg">
             <div class="overlay-header">
               <button type="button" class="float-btn" id="phone-back" aria-label="Back to agents">${icon("back")}</button>
               <button type="button" class="float-btn" id="settings-btn" aria-label="Agent settings">${icon("gear")}</button>
@@ -1622,7 +1625,7 @@
           )
           .join("");
         return `
-          <div class="relative flex h-full flex-col bg-bg">
+          <div class="relative flex min-h-0 flex-1 flex-col bg-bg">
             <div class="overlay-header"><span></span><span></span></div>
             <div class="flex-1 overflow-auto" style="padding-top: 52px; padding-bottom: 12px">
               <h1 class="large-title">Settings</h1>
