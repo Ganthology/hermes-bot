@@ -1,4 +1,4 @@
-/** Speech-to-text engine used by the composer mic. On-device Whisper lands in a follow-up PR. */
+/** Speech-to-text engine used by the composer mic. */
 
 export type TranscribeSource =
   | { kind: 'uri'; uri: string }

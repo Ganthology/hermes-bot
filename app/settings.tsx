@@ -15,28 +15,42 @@ import { Stack } from 'expo-router';
 import {
   CLOUD_ENGINES,
   DICTATION_CATALOG,
+  ON_DEVICE_MODELS,
+  cancelModelDownload,
   cloudEngineMeta,
+  deleteModel,
+  downloadModel,
+  formatBytes,
+  getModelPresence,
   hydrateDictationPreference,
   isDictationStubEnabled,
+  isWhisperNativeAvailable,
+  listModelPresence,
   resetDictationProviderCache,
   resolveDictationProvider,
   type CloudSttEngine,
+  type ModelPresence,
+  type OnDeviceModelId,
 } from '../src/dictation';
 import { Button, ErrorBanner, Field } from '../src/components/ui';
 import {
   clearCloudSttConfig,
   loadCloudSttDraft,
   loadDictationProviderPreference,
+  loadOnDeviceModelId,
   saveCloudSttConfig,
   saveDictationProviderPreference,
+  saveOnDeviceModelId,
+  type DictationProviderPreference,
 } from '../src/storage/dictationCloud';
 import { colors, radii, spacing, typography } from '../src/theme';
 
 export default function SettingsScreen() {
   const stubOn = isDictationStubEnabled();
+  const nativeReady = isWhisperNativeAvailable();
 
   const [loading, setLoading] = useState(true);
-  const [preference, setPreference] = useState<'cloud' | null>(null);
+  const [preference, setPreference] = useState<DictationProviderPreference | null>(null);
   const [activeLabel, setActiveLabel] = useState(() => resolveDictationProvider().label);
 
   const [engine, setEngine] = useState<CloudSttEngine>('groq');
@@ -45,24 +59,36 @@ export default function SettingsScreen() {
   const [baseUrl, setBaseUrl] = useState('');
   const [hasStoredKey, setHasStoredKey] = useState(false);
 
+  const [onDeviceModelId, setOnDeviceModelId] = useState<OnDeviceModelId>('tiny.en-q5_1');
+  const [modelPresence, setModelPresence] = useState<ModelPresence[]>([]);
+  const [downloadFraction, setDownloadFraction] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<OnDeviceModelId | null>(null);
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedHint, setSavedHint] = useState<string | null>(null);
+
+  const refreshPresence = useCallback(() => {
+    setModelPresence(listModelPresence());
+  }, []);
 
   const refreshActive = useCallback(async () => {
     await hydrateDictationPreference();
     resetDictationProviderCache();
     setActiveLabel(resolveDictationProvider().label);
     setPreference(await loadDictationProviderPreference());
-  }, []);
+    setOnDeviceModelId(await loadOnDeviceModelId());
+    refreshPresence();
+  }, [refreshPresence]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [draft, pref] = await Promise.all([
+        const [draft, pref, deviceModel] = await Promise.all([
           loadCloudSttDraft(),
           loadDictationProviderPreference(),
+          loadOnDeviceModelId(),
         ]);
         if (cancelled) {
           return;
@@ -73,6 +99,8 @@ export default function SettingsScreen() {
         setBaseUrl(draft.baseUrl);
         setHasStoredKey(draft.hasKey);
         setPreference(pref);
+        setOnDeviceModelId(deviceModel);
+        refreshPresence();
         await hydrateDictationPreference();
         resetDictationProviderCache();
         setActiveLabel(resolveDictationProvider().label);
@@ -84,23 +112,78 @@ export default function SettingsScreen() {
     })();
     return () => {
       cancelled = true;
+      cancelModelDownload();
     };
-  }, []);
+  }, [refreshPresence]);
 
   const engineMeta = cloudEngineMeta(engine);
 
-  const onSelectCloud = () => {
+  const onSelectProvider = (id: 'cloud' | 'on_device') => {
     setError(null);
     setSavedHint(null);
-    setPreference('cloud');
+    setPreference(id);
     void (async () => {
       try {
-        await saveDictationProviderPreference('cloud');
+        await saveDictationProviderPreference(id);
         await refreshActive();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not select Cloud.');
+        setError(err instanceof Error ? err.message : 'Could not change dictation engine.');
       }
     })();
+  };
+
+  const onChooseOnDeviceModel = (id: OnDeviceModelId) => {
+    setError(null);
+    setSavedHint(null);
+    setOnDeviceModelId(id);
+    void (async () => {
+      try {
+        await saveOnDeviceModelId(id);
+        await saveDictationProviderPreference('on_device');
+        await refreshActive();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not select model.');
+      }
+    })();
+  };
+
+  const onDownloadModel = async (id: OnDeviceModelId) => {
+    setError(null);
+    setSavedHint(null);
+    setDownloadingId(id);
+    setDownloadFraction(0);
+    setBusy(true);
+    try {
+      await downloadModel(id, (progress) => {
+        setDownloadFraction(progress.fraction);
+      });
+      await saveOnDeviceModelId(id);
+      await saveDictationProviderPreference('on_device');
+      refreshPresence();
+      await refreshActive();
+      setSavedHint(`${ON_DEVICE_MODELS.find((m) => m.id === id)?.label ?? 'Model'} ready on this device.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Model download failed.');
+    } finally {
+      setBusy(false);
+      setDownloadingId(null);
+      setDownloadFraction(null);
+    }
+  };
+
+  const onDeleteModel = async (id: OnDeviceModelId) => {
+    setError(null);
+    setSavedHint(null);
+    setBusy(true);
+    try {
+      deleteModel(id);
+      refreshPresence();
+      setSavedHint('Model deleted from this device.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete model.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onSaveCloud = async () => {
@@ -127,14 +210,16 @@ export default function SettingsScreen() {
     setBusy(true);
     try {
       await clearCloudSttConfig();
-      await saveDictationProviderPreference(null);
+      if (preference === 'cloud') {
+        await saveDictationProviderPreference(null);
+        setPreference(null);
+      }
       setApiKey('');
       setModel('');
       setBaseUrl('');
       setHasStoredKey(false);
-      setPreference(null);
       await refreshActive();
-      setSavedHint('Cloud key cleared. Dictation falls back to the demo stub (dev) or “none yet”.');
+      setSavedHint('Cloud key cleared.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not clear cloud STT settings.');
     } finally {
@@ -151,6 +236,8 @@ export default function SettingsScreen() {
     );
   }
 
+  const activePresence = getModelPresence(onDeviceModelId);
+
   return (
     <KeyboardAvoidingView
       style={styles.root}
@@ -165,8 +252,8 @@ export default function SettingsScreen() {
 
         <Text style={styles.sectionTitle}>Dictation</Text>
         <Text style={styles.sectionBody}>
-          Tap Mic on chat → stop → transcript sends as a normal prompt. Cloud STT runs on the phone
-          against Groq or OpenAI — no Hermes Bot backend.
+          Tap Mic on chat → stop → transcript sends as a normal prompt. Cloud calls Groq/OpenAI from
+          the phone; on-device Whisper runs locally after you download a model. No Hermes Bot backend.
         </Text>
 
         {error ? <ErrorBanner message={error} /> : null}
@@ -180,14 +267,22 @@ export default function SettingsScreen() {
               ? hasStoredKey
                 ? 'Cloud engine is selected. Keys stay in Secure Store on this device.'
                 : 'Cloud is selected — save an API key below before recording.'
-              : stubOn
-                ? 'Demo stub is on until you save Cloud below. Set EXPO_PUBLIC_DICTATION_STUB=0 for the “none yet” path.'
-                : 'No engine selected — save Cloud below, or stop after recording shows a clear error.'}
+              : preference === 'on_device'
+                ? activePresence.present
+                  ? nativeReady
+                    ? 'On-device Whisper is ready. Audio stays on this phone.'
+                    : 'Model is downloaded, but transcription needs a custom native build (not Expo Go).'
+                  : 'On-device selected — download a Whisper model below before recording.'
+                : stubOn
+                  ? 'Demo stub is on until you select On-device or Cloud. Set EXPO_PUBLIC_DICTATION_STUB=0 for the “none yet” path.'
+                  : 'No engine selected — pick On-device or Cloud below.'}
           </Text>
         </View>
 
         {DICTATION_CATALOG.map((entry) => {
-          const selected = entry.id === 'cloud' && preference === 'cloud';
+          const selected =
+            (entry.id === 'cloud' && preference === 'cloud') ||
+            (entry.id === 'on_device' && preference === 'on_device');
           if (!entry.available) {
             return (
               <Pressable
@@ -210,7 +305,11 @@ export default function SettingsScreen() {
               key={entry.id}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              onPress={onSelectCloud}
+              onPress={() => {
+                if (entry.id === 'cloud' || entry.id === 'on_device') {
+                  onSelectProvider(entry.id);
+                }
+              }}
               style={[styles.row, selected && styles.rowSelected]}
             >
               <View style={styles.rowBody}>
@@ -223,6 +322,93 @@ export default function SettingsScreen() {
             </Pressable>
           );
         })}
+
+        {preference === 'on_device' ? (
+          <View style={styles.cloudForm}>
+            <Text style={styles.formTitle}>On-device model</Text>
+            <Text style={styles.formHint}>
+              Models download from Hugging Face (ggerganov/whisper.cpp) into app storage — not into
+              the git repo. Default Tiny English q5 is ~31 MB. Needs{' '}
+              <Text style={styles.mono}>expo-dev-client</Text> / prebuild (same as other native
+              modules) — Expo Go cannot run whisper.rn.
+            </Text>
+            {!nativeReady ? (
+              <Text style={styles.warnHint}>
+                Native Whisper module not found in this binary. Download still works; transcription
+                needs `npx expo prebuild` then `npx expo run:ios` / `run:android`.
+              </Text>
+            ) : null}
+
+            {ON_DEVICE_MODELS.map((item) => {
+              const presence = modelPresence.find((p) => p.modelId === item.id);
+              const selected = item.id === onDeviceModelId;
+              const downloading = downloadingId === item.id;
+              return (
+                <View
+                  key={item.id}
+                  style={[styles.modelCard, selected && styles.rowSelected]}
+                >
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => onChooseOnDeviceModel(item.id)}
+                    style={styles.modelHeader}
+                  >
+                    <View style={styles.rowBody}>
+                      <Text style={styles.rowTitle}>{item.label}</Text>
+                      <Text style={styles.rowBlurb}>
+                        {item.blurb} · {item.sizeLabel}
+                        {presence?.present
+                          ? ` · on device (${formatBytes(presence.bytes)})`
+                          : ' · not downloaded'}
+                      </Text>
+                    </View>
+                    <Text style={selected ? styles.selectedBadge : styles.chooseBadge}>
+                      {selected ? 'Selected' : 'Use'}
+                    </Text>
+                  </Pressable>
+
+                  {downloading && downloadFraction != null ? (
+                    <View style={styles.progressBlock}>
+                      <View style={styles.progressTrack}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${Math.round(downloadFraction * 100)}%` },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.progressLabel}>
+                        Downloading… {Math.round(downloadFraction * 100)}%
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.modelActions}>
+                    {!presence?.present ? (
+                      <Button
+                        label={downloading ? 'Downloading…' : `Download ${item.sizeLabel}`}
+                        onPress={() => {
+                          void onDownloadModel(item.id);
+                        }}
+                        disabled={busy}
+                      />
+                    ) : (
+                      <Button
+                        label="Delete from device"
+                        variant="ghost"
+                        onPress={() => {
+                          void onDeleteModel(item.id);
+                        }}
+                        disabled={busy}
+                      />
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         {preference === 'cloud' ? (
           <View style={styles.cloudForm}>
@@ -412,6 +598,7 @@ const styles = StyleSheet.create({
   },
   rowBody: {
     gap: 4,
+    flex: 1,
   },
   rowTitle: {
     color: colors.text,
@@ -446,6 +633,54 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     marginBottom: spacing.xs,
+  },
+  formHint: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginBottom: spacing.sm,
+  },
+  warnHint: {
+    color: colors.warning,
+    ...typography.caption,
+    marginBottom: spacing.sm,
+  },
+  mono: {
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+    fontSize: 12,
+  },
+  modelCard: {
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  modelHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  modelActions: {
+    gap: spacing.xs,
+  },
+  progressBlock: {
+    gap: spacing.xs,
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.bgSoft,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 6,
+    backgroundColor: colors.accent,
+  },
+  progressLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
   },
   engineRow: {
     flexDirection: 'row',

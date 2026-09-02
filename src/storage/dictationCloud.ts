@@ -1,15 +1,21 @@
 import * as SecureStore from 'expo-secure-store';
 
 import type { CloudSttEngine } from '../dictation/cloudDefaults';
+import {
+  DEFAULT_ON_DEVICE_MODEL_ID,
+  parseOnDeviceModelId,
+  type OnDeviceModelId,
+} from '../dictation/onDeviceModels';
 
 const PROVIDER_KEY = 'hermes_bot_dictation_provider';
 const ENGINE_KEY = 'hermes_bot_stt_engine';
 const API_KEY_KEY = 'hermes_bot_stt_api_key';
 const MODEL_KEY = 'hermes_bot_stt_model';
 const BASE_URL_KEY = 'hermes_bot_stt_base_url';
+const ON_DEVICE_MODEL_KEY = 'hermes_bot_on_device_model';
 
-/** User-selected dictation engine. Only `cloud` is product-selectable in this PR. */
-export type DictationProviderPreference = 'cloud';
+/** User-selected dictation engine. Hermes host stays unavailable (no RPC). */
+export type DictationProviderPreference = 'cloud' | 'on_device';
 
 export type CloudSttConfig = {
   engine: CloudSttEngine;
@@ -24,9 +30,16 @@ function parseEngine(raw: string | null): CloudSttEngine {
   return raw === 'openai' ? 'openai' : 'groq';
 }
 
+function parsePreference(raw: string | null): DictationProviderPreference | null {
+  if (raw === 'cloud' || raw === 'on_device') {
+    return raw;
+  }
+  return null;
+}
+
 export async function loadDictationProviderPreference(): Promise<DictationProviderPreference | null> {
   const raw = await SecureStore.getItemAsync(PROVIDER_KEY);
-  return raw === 'cloud' ? 'cloud' : null;
+  return parsePreference(raw);
 }
 
 export async function saveDictationProviderPreference(
@@ -37,6 +50,15 @@ export async function saveDictationProviderPreference(
     return;
   }
   await SecureStore.setItemAsync(PROVIDER_KEY, preference);
+}
+
+export async function loadOnDeviceModelId(): Promise<OnDeviceModelId> {
+  const raw = await SecureStore.getItemAsync(ON_DEVICE_MODEL_KEY);
+  return parseOnDeviceModelId(raw);
+}
+
+export async function saveOnDeviceModelId(modelId: OnDeviceModelId): Promise<void> {
+  await SecureStore.setItemAsync(ON_DEVICE_MODEL_KEY, modelId);
 }
 
 export async function loadCloudSttConfig(): Promise<CloudSttConfig | null> {
@@ -111,3 +133,5 @@ export async function loadCloudSttDraft(): Promise<{
     hasKey: Boolean(apiKey?.trim()),
   };
 }
+
+export { DEFAULT_ON_DEVICE_MODEL_ID };

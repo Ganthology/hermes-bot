@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  RecordingPresets,
   getRecordingPermissionsAsync,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioRecorder,
-  useAudioRecorderState,
+  useAudioStream,
 } from 'expo-audio';
 
 import { toDictationError, humanDictationMessage } from './errors';
@@ -14,13 +12,9 @@ import {
   resolveDictationProvider,
 } from './resolveProvider';
 import { DictationError, type DictationPhase, type DictationProvider } from './types';
+import { startWavCapture, WAV_CAPTURE, type WavCaptureSession } from './wavCapture';
 
 const MIN_DURATION_MS = 400;
-
-const RECORDING_OPTIONS = {
-  ...RecordingPresets.HIGH_QUALITY,
-  isMeteringEnabled: true,
-};
 
 export type MicPermission = 'unknown' | 'granted' | 'denied';
 
@@ -39,18 +33,9 @@ export type UseDictationResult = {
   cancel: () => Promise<void>;
 };
 
-function normalizeMetering(metering: number | undefined): number {
-  if (typeof metering !== 'number' || Number.isNaN(metering)) {
-    return 0;
-  }
-  // iOS dBFS roughly −160…0; clamp into a usable UI range.
-  const clamped = Math.min(0, Math.max(-60, metering));
-  return (clamped + 60) / 60;
-}
-
 /**
- * Tap-to-record dictation. On stop, transcribes then calls `onTranscript`
- * so the composer can send immediately (same path as Send).
+ * Tap-to-record dictation. Captures 16 kHz mono PCM → WAV (works for cloud + on-device Whisper).
+ * On stop, transcribes then calls `onTranscript` so the composer can send immediately.
  */
 export function useDictation(options: {
   onTranscript: (text: string) => Promise<void> | void;
@@ -58,8 +43,23 @@ export function useDictation(options: {
 }): UseDictationResult {
   const { onTranscript, disabled = false } = options;
   const [provider, setProvider] = useState<DictationProvider>(() => resolveDictationProvider());
-  const recorder = useAudioRecorder(RECORDING_OPTIONS);
-  const recorderState = useAudioRecorderState(recorder, 80);
+
+  const captureRef = useRef<WavCaptureSession | null>(null);
+  const [level, setLevel] = useState(0);
+
+  const { stream } = useAudioStream({
+    sampleRate: WAV_CAPTURE.sampleRate,
+    channels: WAV_CAPTURE.channels,
+    encoding: 'int16',
+    onBuffer: (buffer) => {
+      const capture = captureRef.current;
+      if (!capture) {
+        return;
+      }
+      capture.append(buffer.data);
+      setLevel(capture.lastLevel());
+    },
+  });
 
   const [phase, setPhase] = useState<DictationPhase>('idle');
   const [permission, setPermission] = useState<MicPermission>('unknown');
@@ -95,8 +95,15 @@ export function useDictation(options: {
     })();
     return () => {
       cancelled = true;
+      captureRef.current?.discard();
+      captureRef.current = null;
+      try {
+        stream.stop();
+      } catch {
+        // Stream may already be stopped.
+      }
     };
-  }, []);
+  }, [stream]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -116,15 +123,16 @@ export function useDictation(options: {
     return false;
   }, []);
 
-  const discardRecording = useCallback(async () => {
+  const discardRecording = useCallback(() => {
+    captureRef.current?.discard();
+    captureRef.current = null;
+    setLevel(0);
     try {
-      if (recorder.isRecording) {
-        await recorder.stop();
-      }
+      stream.stop();
     } catch {
       // Best-effort discard.
     }
-  }, [recorder]);
+  }, [stream]);
 
   const start = useCallback(async () => {
     if (busyRef.current || disabled || phase !== 'idle') {
@@ -142,18 +150,21 @@ export function useDictation(options: {
         allowsRecording: true,
         playsInSilentMode: true,
       });
-      await recorder.prepareToRecordAsync();
-      recorder.record();
+      captureRef.current?.discard();
+      captureRef.current = startWavCapture();
+      setLevel(0);
+      await stream.start();
       startedAtRef.current = Date.now();
       setPhase('recording');
     } catch (err) {
+      discardRecording();
       const mapped = toDictationError(err);
       setError(humanDictationMessage(mapped.code, mapped.message));
       setPhase('idle');
     } finally {
       busyRef.current = false;
     }
-  }, [disabled, ensurePermission, phase, recorder]);
+  }, [disabled, discardRecording, ensurePermission, phase, stream]);
 
   const cancel = useCallback(async () => {
     if (phase !== 'recording') {
@@ -162,7 +173,7 @@ export function useDictation(options: {
     cancelRequestedRef.current = true;
     busyRef.current = true;
     try {
-      await discardRecording();
+      discardRecording();
     } finally {
       setPhase('idle');
       busyRef.current = false;
@@ -177,23 +188,39 @@ export function useDictation(options: {
     cancelRequestedRef.current = false;
     try {
       const elapsed = Date.now() - startedAtRef.current;
-      await recorder.stop();
-      const uri = recorder.uri;
+      const capture = captureRef.current;
+      try {
+        stream.stop();
+      } catch {
+        // Continue — we may still have PCM buffers.
+      }
 
-      if (cancelRequestedRef.current) {
+      if (cancelRequestedRef.current || !capture) {
+        capture?.discard();
+        captureRef.current = null;
+        setLevel(0);
         setPhase('idle');
         return;
       }
 
       if (elapsed < MIN_DURATION_MS) {
+        capture.discard();
+        captureRef.current = null;
+        setLevel(0);
         throw new DictationError('too_short', humanDictationMessage('too_short'));
       }
-      if (!uri) {
-        throw new DictationError('failed', humanDictationMessage('failed'));
-      }
+
+      const uri = await capture.finalize();
+      captureRef.current = null;
+      setLevel(0);
 
       setPhase('transcribing');
-      const text = (await provider.transcribe({ kind: 'uri', uri })).trim();
+      const text = (
+        await provider.transcribe(
+          { kind: 'uri', uri },
+          { mimeType: WAV_CAPTURE.mimeType },
+        )
+      ).trim();
       if (cancelRequestedRef.current) {
         setPhase('idle');
         return;
@@ -205,6 +232,9 @@ export function useDictation(options: {
       setPhase('idle');
       await onTranscriptRef.current(text);
     } catch (err) {
+      captureRef.current?.discard();
+      captureRef.current = null;
+      setLevel(0);
       const mapped = toDictationError(err);
       if (mapped.code !== 'cancelled') {
         setError(humanDictationMessage(mapped.code, mapped.message));
@@ -213,7 +243,7 @@ export function useDictation(options: {
     } finally {
       busyRef.current = false;
     }
-  }, [phase, provider, recorder]);
+  }, [phase, provider, stream]);
 
   const blockedReason = useMemo(() => {
     if (disabled) {
@@ -225,12 +255,9 @@ export function useDictation(options: {
     return null;
   }, [disabled, permission]);
 
-  const level =
-    phase === 'recording' ? normalizeMetering(recorderState.metering) : 0;
-
   return {
     phase,
-    level,
+    level: phase === 'recording' ? level : 0,
     permission,
     blockedReason,
     error,

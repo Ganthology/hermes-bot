@@ -36,8 +36,8 @@ Voice-to-text on the chat composer — **not** voice-to-voice, and **not** a Her
 | PR | Ships |
 |----|--------|
 | **1** | Mic UI (tap record → stop → transcribe → **send**), level meter, cancel, `DictationProvider` interface, unavailable / demo stub |
-| **2 (this)** | Cloud STT HTTP client (Groq Whisper / OpenAI whisper & gpt-4o-*-transcribe) |
-| **3** | On-device Whisper download + inference |
+| **2** | Cloud STT HTTP client (Groq Whisper / OpenAI whisper & gpt-4o-*-transcribe) |
+| **3 (this)** | On-device Whisper download + local inference (`whisper.rn`) |
 
 Flow: tap **Mic** → speak → **Stop** → provider transcribes → text **sends immediately** on the same path as Send (never parks in the composer). **Cancel** discards audio.
 
@@ -58,11 +58,45 @@ Suggested OpenAI models you can tap or type: `gpt-4o-mini-transcribe`, `gpt-4o-t
 
 **Keys:** create a Groq key at [console.groq.com](https://console.groq.com) or an OpenAI key at [platform.openai.com](https://platform.openai.com). Never commit keys. Clear via **Clear cloud key** in Settings.
 
-Without a saved cloud engine, `__DEV__` still uses the **demo stub** (`EXPO_PUBLIC_DICTATION_STUB=0` → friendly “none yet”). On-device Whisper stays greyed (PR 3).
+Without a saved engine, `__DEV__` still uses the **demo stub** (`EXPO_PUBLIC_DICTATION_STUB=0` → friendly “none yet”).
 
-**Hermes host STT:** the TUI gateway methods this client uses have **no documented speech-to-text RPC**, so “use host STT” is not invented here — the Settings row stays a follow-up.
+### On-device Whisper (PR 3)
 
-**Permissions:** `expo-audio` config plugin writes iOS `NSMicrophoneUsageDescription` and Android `RECORD_AUDIO`. Recording works in **Expo Go** for cloud STT (plain HTTPS). A later on-device Whisper native module will need a **dev client** / `npx expo prebuild` + `npx expo run:ios` / `run:android` — remind yourself to prebuild when that lands.
+Local [whisper.cpp](https://github.com/ggerganov/whisper.cpp) via [`whisper.rn`](https://github.com/mybigday/whisper.rn). Audio **never leaves the phone** — no Hermes Bot backend and no cloud upload from this provider.
+
+1. Open **Settings → Dictation** → select **On-device Whisper**
+2. Download a quantized English GGML model (user-initiated; progress in Settings)
+3. Tap **Use** on the model you want (default **Tiny English q5**)
+4. Dictation records 16 kHz mono WAV on-device, then runs local inference → **send**
+
+| Model | Approx. size | Notes |
+|-------|--------------|--------|
+| Tiny English (q5) — default | ~31 MB | Fastest; good for short English prompts |
+| Base English (q5) | ~57 MB | Better accuracy, still phone-friendly |
+| Small English (q5) | ~181 MB | Higher quality; more RAM / time |
+
+Models download from Hugging Face [`ggerganov/whisper.cpp`](https://huggingface.co/ggerganov/whisper.cpp) into the app documents directory (`whisper-models/`). They are **not** shipped in the app binary and must **never** be committed to git (see `.gitignore`).
+
+**Delete:** Settings → Dictation → on-device model → **Delete from device**.
+
+#### Native build required (not Expo Go)
+
+`whisper.rn` is a native module — same constraint as other custom native work. **Expo Go cannot run on-device STT.**
+
+```bash
+npm install
+npx expo prebuild
+npx expo run:ios
+# or: npx expo run:android
+```
+
+Use a **development build** (`expo-dev-client` is in this project). After native changes, re-run prebuild / the platform run command. Cloud STT still works over plain HTTPS in Expo Go; on-device does not.
+
+Failures are human-readable (download failed, model missing, mic denied, OOM). Empty / garbage transcripts are never sent.
+
+**Hermes host STT:** the TUI gateway methods this client uses have **no documented speech-to-text RPC**, so “use host STT” is not invented here — the Settings row stays greyed.
+
+**Permissions:** `expo-audio` config plugin writes iOS `NSMicrophoneUsageDescription` and Android `RECORD_AUDIO`. Dictation captures PCM via `expo-audio`’s audio stream and writes a short WAV in cache before transcription.
 
 ## Glossary and ADRs
 
@@ -118,7 +152,7 @@ npm run lint
 | Home | Named agent list, empty state, New agent |
 | New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
 | Chat | Composer, message list, SQLite cache, reconcile via `session.history` / resume |
-| Dictation | Tap Mic → record → Stop → cloud (or stub) transcribe → send as a normal prompt; Settings holds the API key |
+| Dictation | Tap Mic → record → Stop → on-device or cloud transcribe → send as a normal prompt; Settings holds keys / model download |
 | Streaming | TUI JSON-RPC over `/api/ws` |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 

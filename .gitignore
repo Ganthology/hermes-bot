@@ -44,5 +44,10 @@ yarn-error.*
 /ios
 /android
 
+# Whisper / ggml model binaries (download on device — never commit)
+*.ggml*
+ggml-*.bin
+**/whisper-models/
+
 # local editor plugin caches
 .claude/

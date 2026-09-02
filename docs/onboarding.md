@@ -21,7 +21,7 @@ npm run lint
 npx expo start
 ```
 
-Expo Go or press `i` / `a`. Physical device + custom native modules: `npx expo install expo-dev-client` then `npx expo run:ios --device` (or Android). Prebuild generates `/ios` and `/android` — those folders stay gitignored.
+Expo Go or press `i` / `a`. Physical device + custom native modules (`whisper.rn` on-device dictation, etc.): `npx expo install expo-dev-client` then `npx expo prebuild` and `npx expo run:ios --device` (or Android). Prebuild generates `/ios` and `/android` — those folders stay gitignored. On-device Whisper models download into app storage after install — see README Dictation.
 
 ## Host setup (not in this repo)
 

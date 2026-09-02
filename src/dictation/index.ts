@@ -4,6 +4,7 @@ export type {
   TranscribeOptions,
   DictationPhase,
   DictationProviderId,
+  DictationCatalogEntry,
 } from './types';
 export { DictationError } from './types';
 export {
@@ -21,3 +22,20 @@ export {
   resolveCloudModel,
   type CloudSttEngine,
 } from './cloudDefaults';
+export {
+  ON_DEVICE_MODELS,
+  DEFAULT_ON_DEVICE_MODEL_ID,
+  onDeviceModelMeta,
+  type OnDeviceModelId,
+} from './onDeviceModels';
+export {
+  downloadModel,
+  deleteModel,
+  cancelModelDownload,
+  getModelPresence,
+  listModelPresence,
+  formatBytes,
+  type ModelDownloadProgress,
+  type ModelPresence,
+} from './onDeviceModelStore';
+export { isWhisperNativeAvailable } from './providers/onDevice';
