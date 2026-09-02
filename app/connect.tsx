@@ -48,7 +48,11 @@ export default function ConnectScreen() {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.brand}>Hermes Bot</Text>
         <Text style={styles.sub}>
           Point this phone at an existing Hermes host. Paste the base URL from{' '}
@@ -110,7 +114,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: {
     padding: spacing.lg,
-    paddingTop: spacing.xl,
     gap: spacing.sm,
   },
   brand: {

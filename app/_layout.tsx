@@ -18,12 +18,13 @@ export default function RootLayout() {
             <StatusBar style="dark" />
             <Stack
               screenOptions={{
-                headerStyle: { backgroundColor: colors.bgElevated },
+                headerTransparent: true,
+                headerBlurEffect: 'none',
+                headerShadowVisible: false,
                 headerTintColor: colors.text,
                 headerTitleStyle: { fontWeight: '600' },
-                contentStyle: { backgroundColor: colors.bg },
-                headerShadowVisible: false,
                 headerBackButtonDisplayMode: 'minimal',
+                contentStyle: { backgroundColor: colors.bg },
               }}
             >
               <Stack.Screen name="index" options={{ headerShown: false }} />

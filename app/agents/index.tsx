@@ -37,9 +37,8 @@ export default function AgentsHomeScreen() {
     });
   }, [navigation, disconnect]);
 
-  return (
-    <View style={styles.root}>
-      <Stack.Screen options={{ title: 'Hermes Bot' }} />
+  const listHeader = (
+    <>
       {lastError ? (
         <View style={styles.bannerWrap}>
           <ErrorBanner message={lastError} />
@@ -48,7 +47,6 @@ export default function AgentsHomeScreen() {
           </Pressable>
         </View>
       ) : null}
-
       <View style={styles.statusRow}>
         <Text style={styles.status}>
           {connectionState === 'open'
@@ -59,23 +57,31 @@ export default function AgentsHomeScreen() {
         </Text>
         <Button label="New agent" onPress={() => router.push('/agents/new')} style={styles.newBtn} />
       </View>
+    </>
+  );
 
-      {loading ? (
-        <Text style={styles.loading}>Loading…</Text>
-      ) : agents.length === 0 ? (
-        <EmptyState
-          title="No agents yet"
-          body="Create a named agent. Each one is a forever chat with Hermes."
-          action={<Button label="New agent" onPress={() => router.push('/agents/new')} />}
-        />
-      ) : (
-        <FlatList
-          data={agents}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => <AgentRow agent={item} />}
-        />
-      )}
+  return (
+    <View style={styles.root}>
+      <Stack.Screen options={{ title: 'Hermes Bot' }} />
+      <FlatList
+        data={loading ? [] : agents}
+        keyExtractor={(item) => item.id}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.list}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          loading ? (
+            <Text style={styles.loading}>Loading…</Text>
+          ) : (
+            <EmptyState
+              title="No agents yet"
+              body="Create a named agent. Each one is a forever chat with Hermes."
+              action={<Button label="New agent" onPress={() => router.push('/agents/new')} />}
+            />
+          )
+        }
+        renderItem={({ item }) => <AgentRow agent={item} />}
+      />
     </View>
   );
 }
