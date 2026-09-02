@@ -87,7 +87,11 @@ export default function NewAgentScreen() {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.lead}>Name someone. Say what they are for. That is the forever chat.</Text>
         {error ? <ErrorBanner message={error} /> : null}
 

@@ -26,12 +26,14 @@ export function MessageList({
   onRespond,
   responding,
   activity,
+  header,
 }: {
   messages: MessageRecord[];
   interactive: InteractiveRequest[];
   onRespond: (request: InteractiveRequest, payload: Record<string, unknown>) => Promise<void>;
   responding?: boolean;
   activity: TurnActivityState;
+  header?: React.ReactNode;
 }) {
   const listRef = useRef<FlatList<MessageRecord>>(null);
   const pinnedToBottomRef = useRef(true);
@@ -82,9 +84,11 @@ export function MessageList({
       style={styles.list}
       data={messages}
       keyExtractor={(item) => item.id}
+      contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.content}
       renderItem={({ item }) => <Bubble message={item} />}
       extraData={`${lastContent}:${lastStreaming}:${activityKey}`}
+      ListHeaderComponent={header ? <View style={styles.banner}>{header}</View> : null}
       onScroll={onScroll}
       scrollEventThrottle={16}
       onContentSizeChange={onContentSizeChange}
@@ -138,6 +142,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.sm,
+  },
+  banner: {
+    marginBottom: spacing.sm,
   },
   bubble: {
     borderRadius: radii.lg,

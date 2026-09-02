@@ -402,12 +402,6 @@ export default function AgentChatScreen() {
       <Stack.Screen
         options={{ title, headerBackButtonDisplayMode: 'minimal' }}
       />
-      {error ? (
-        <View style={styles.banner}>
-          <ErrorBanner message={error} />
-        </View>
-      ) : null}
-
       {loading ? (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.accent} />
@@ -420,6 +414,7 @@ export default function AgentChatScreen() {
           responding={responding}
           onRespond={onRespond}
           activity={activity}
+          header={error ? <ErrorBanner message={error} /> : null}
         />
       )}
 
@@ -434,10 +429,6 @@ export default function AgentChatScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  banner: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
   loading: {
     flex: 1,
     alignItems: 'center',
