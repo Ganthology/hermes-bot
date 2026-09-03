@@ -10,7 +10,7 @@ Hermes Bot is a **phone client**. Users should never need the words *session*, *
 | **Instance / host** | One machine (or VM) running Hermes, typically exposed via `hermes serve` / `hermes dashboard` on **:9119**. v1 connects to **one** existing host URL. |
 | **Profile** | A Hermes configuration home (`HERMES_HOME`) on that host — models, tools, skills. Optional on `session.create` when the gateway lists profiles. Users see “agents”, not profiles. |
 | **Chat session** | Hermes durable conversation row (SQLite on the host). The phone **pins** `stored_session_id` locally; there is no documented `session.pin` RPC. |
-| **App agent** | Product object on the phone: display name + one-line purpose + pinned chat session (+ optional profile name). Home is the agent roster. `session.list` is debug, not the product. |
+| **App agent** | Product object: a **Hermes profile** on the host (Name, Role, What they do, Who they are) plus a pinned forever chat. Home is the agent roster from the host. Users never see “profile”. `session.list` is debug, not the product. |
 | **Forever chat** | Canonical Bot Mode relationship: one continuous transcript per agent. In-place compression keeps the same id. `/new` would fork the relationship — **not in v1**. |
 | **TUI gateway** | JSON-RPC control channel used by Ink TUI / dashboard chat. Phone pipe = WebSocket **`/api/ws`** on the dashboard port (**9119**), newline-delimited JSON-RPC. |
 | **API server (:8642)** | OpenAI-compatible HTTP + SSE surface. **Does not** serve `/api/ws`. Never point TUI methods at 8642. |
