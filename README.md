@@ -64,7 +64,7 @@ npm run lint
 
 Assistant bubbles use Software Mansion [`react-native-streamdown`](https://github.com/software-mansion-labs/react-native-streamdown) (`StreamdownText`): incomplete-stream repair via `remend` on a worklet thread, rendered with [`react-native-enriched-markdown`](https://github.com/software-mansion-labs/react-native-enriched-markdown) and its `streamingAnimation`. Live tokens come from TUI `message.delta`; `message.complete` freezes the bubble. User bubbles stay plain text.
 
-**Expo Go vs dev client:** `react-native-enriched-markdown` (and Streamdown’s Bundle Mode worklets setup) require a custom native build. They do **not** run in Expo Go. Use:
+**Expo Go vs dev client:** `react-native-enriched-markdown` (and Streamdown’s Bundle Mode worklets setup) require a custom native build. They do **not** run in Expo Go. Camera / photo-library / document attach (`expo-image-picker`, `expo-document-picker`) also need that **dev client** (permission strings + native modules) — same prebuild path:
 
 ```bash
 npx expo install expo-dev-client
@@ -85,7 +85,8 @@ Turn activity (honest working caption, collapsible reasoning, tool rows) follows
 3. Tap **Connect**. Credentials are stored in **expo-secure-store** (no Hermes Bot account system).
 4. Tap **New agent** → name + one-line “what it is for”.
 5. Open the agent and send a message. Assistant markdown streams from `message.delta` when the gateway is up.
-6. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
+6. Attach from chat: tap **+** next to the composer → **Camera**, **Photo library**, or **File**. Stage chips appear above the field (tap **×** to remove). Caption is optional — you can send attachments alone. The phone always uploads bytes over `:9119` (`image.attach_bytes` / `pdf.attach` / `file.attach`); it never sends a phone filesystem path to the gateway.
+7. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
 
 ### Auth notes
 
@@ -100,14 +101,17 @@ Turn activity (honest working caption, collapsible reasoning, tool rows) follows
 | Connect | URL + token → Secure Store |
 | Home | Named agent list, empty state, New agent |
 | New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
-| Chat | Composer, message list, SQLite cache, reconcile via `session.history` / resume |
+| Chat | Composer (+ attach), message list, SQLite cache, reconcile via `session.history` / resume |
 | Streaming | TUI JSON-RPC over `/api/ws`; assistant markdown via StreamdownText |
+| Attachments | Camera / photo library / files → remote byte upload (`image.attach_bytes` / `pdf.attach` / `file.attach`) then `prompt.submit` |
 | Activity | Thinking / reasoning / tool progress when the host emits it; otherwise “Working…” while the turn is in flight |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 
-RPC used: `session.create`, `session.list` (debug only), `session.resume`, `session.history`, `prompt.submit`, `approval.respond`, `clarify.respond`, `sudo.respond`, `secret.respond`.
+RPC used: `session.create`, `session.list` (debug only), `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, `approval.respond`, `clarify.respond`, `sudo.respond`, `secret.respond`.
 
 Stream events: `message.start`, `message.delta`, `message.complete`, `thinking.delta`, `reasoning.delta`, `status.update`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
+
+Inbound agent images: when history text includes `MEDIA:` / image paths, the phone fetches **`GET /api/media?path=`** on the same `:9119` host (dashboard token). If that endpoint is missing or refuses, the bubble skips the image (no Hermes Bot media proxy).
 
 There is **no `/new` in the bot chat** — forking the relationship is out of scope for v1. Compression is assumed **in-place** (same session id).
 
@@ -127,6 +131,7 @@ Documented against public Hermes Agent materials (≈ 2026-08-29):
 - WS close **4401** = bad ticket; **4403** = Host/peer mismatch.
 - Ordinary `prompt.submit` must **never** send rewind/`truncate_*` / `confirm_truncate` params.
 - Field names for some respond payloads are poorly documented — we feature-detect and keep payloads flexible.
+- Attachments: never call `image.attach` with a phone path; always `image.attach_bytes` / `pdf.attach` / `file.attach` (remote byte path). Include `file.attach`’s `ref_text` in the submitted prompt.
 - Do not invent a fourth protocol.
 
 ## License

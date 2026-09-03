@@ -118,6 +118,63 @@ export type PromptSubmitParams = {
   text: string;
 };
 
+/** Remote image upload — `image.attach_bytes` (never phone-local `image.attach`). */
+export type ImageAttachBytesParams = {
+  session_id: string;
+  content_base64: string;
+  filename?: string;
+};
+
+export type ImageAttachBytesResult = {
+  attached?: boolean;
+  path?: string;
+  count?: number;
+  text?: string;
+  message?: string;
+  bytes?: number;
+  [key: string]: unknown;
+};
+
+/** PDF vision-tile path — `pdf.attach` with base64 for remote clients. */
+export type PdfAttachParams = {
+  session_id: string;
+  content_base64: string;
+  filename?: string;
+};
+
+export type PdfAttachResult = {
+  attached?: boolean;
+  filename?: string;
+  pages_attached?: number;
+  count?: number;
+  text?: string;
+  message?: string;
+  [key: string]: unknown;
+};
+
+/**
+ * Non-image staging — `file.attach`. Remote clients must send `data_url`
+ * (base64 data URL). Response `ref_text` goes into the submitted prompt.
+ */
+export type FileAttachParams = {
+  session_id: string;
+  name: string;
+  data_url: string;
+  /** Optional client-side label; gateway uses it for naming when present. */
+  path?: string;
+};
+
+export type FileAttachResult = {
+  attached?: boolean;
+  name?: string;
+  path?: string;
+  ref_path?: string;
+  ref_text?: string;
+  uploaded?: boolean;
+  message?: string;
+  [key: string]: unknown;
+};
+
 export type ApprovalRespondParams = {
   session_id?: string;
   request_id?: string;
