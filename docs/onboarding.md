@@ -53,7 +53,7 @@ Close **4401** = bad token/ticket. **4403** = Host/peer mismatch (URL host must 
 ## First run in the app
 
 1. Paste base URL + token → Connect (Secure Store)
-2. New agent → name + one-line purpose
+2. New agent → name + what they do → who they are → Save
 3. Open chat, send a message — tokens stream if the host is up
 
 ## Agent checklist
