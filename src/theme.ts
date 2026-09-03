@@ -1,3 +1,5 @@
+import { plexMono, plexSans } from './fonts';
+
 /** Psyche light — Nous glass. #F8FAFF field, ink #0E2766, accent #0053FD, 4px. */
 export const colors = {
   bg: '#F8FAFF',
@@ -35,23 +37,29 @@ export const radii = {
 
 export const typography = {
   brand: {
+    ...plexSans.bold,
     fontSize: 34,
-    fontWeight: '700' as const,
-    letterSpacing: -0.6,
+    letterSpacing: -0.7,
   },
   title: {
+    ...plexSans.semibold,
     fontSize: 22,
-    fontWeight: '600' as const,
     letterSpacing: -0.3,
   },
   body: {
+    ...plexSans.regular,
     fontSize: 16,
-    fontWeight: '400' as const,
     lineHeight: 22,
   },
   caption: {
+    ...plexSans.regular,
     fontSize: 13,
-    fontWeight: '400' as const,
     lineHeight: 18,
+  },
+  mono: {
+    ...plexMono.medium,
+    fontSize: 11,
+    letterSpacing: 0.14 * 11,
+    textTransform: 'uppercase' as const,
   },
 };
