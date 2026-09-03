@@ -1,20 +1,27 @@
-import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 
-import { useAgents } from '../../../src/state/AgentsProvider';
+import { useHostAgents, type RosterAgent } from '../../../src/state/HostAgentsProvider';
 import { useGateway } from '../../../src/state/GatewayProvider';
+import { ensureLocalPinForHostAgent } from '../../../src/profiles';
 import { Button, EmptyState, ErrorBanner } from '../../../src/components/ui';
 import { AgentFace } from '../../../src/components/chrome';
-import type { AgentRecord } from '../../../src/storage/agents';
 import { plexSans } from '../../../src/fonts';
 import { colors, spacing } from '../../../src/theme';
 
 export default function AgentsHomeScreen() {
-  const { agents, loading } = useAgents();
+  const { agents, loading, error, refresh } = useHostAgents();
   const { lastError, clearError } = useGateway();
   const [query, setQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -22,34 +29,68 @@ export default function AgentsHomeScreen() {
       return agents;
     }
     return agents.filter((agent) => {
-      const hay = `${agent.name} ${agent.description}`.toLowerCase();
+      const hay = `${agent.name} ${agent.whatTheyDo} ${agent.subtitle}`.toLowerCase();
       return hay.includes(q);
     });
   }, [agents, query]);
 
-  const listHeader = lastError ? (
-    <View style={styles.bannerWrap}>
-      <ErrorBanner message={lastError} />
-      <Pressable onPress={clearError}>
-        <Text style={styles.dismiss}>Dismiss</Text>
-      </Pressable>
-    </View>
-  ) : null;
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const listHeader = (
+    <>
+      {lastError ? (
+        <View style={styles.bannerWrap}>
+          <ErrorBanner message={lastError} />
+          <Pressable onPress={clearError}>
+            <Text style={styles.dismiss}>Dismiss</Text>
+          </Pressable>
+        </View>
+      ) : null}
+      {error ? (
+        <View style={styles.bannerWrap}>
+          <ErrorBanner message={error} />
+        </View>
+      ) : null}
+    </>
+  );
 
   return (
     <>
       <FlatList
-        data={loading ? [] : visible}
+        data={loading && agents.length === 0 ? [] : visible}
         keyExtractor={(item) => item.id}
         contentInsetAdjustmentBehavior="automatic"
         ListHeaderComponent={listHeader}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />
+        }
         ListEmptyComponent={
           loading ? (
             <Text style={styles.loading}>Loading…</Text>
+          ) : error ? (
+            <EmptyState
+              title="Couldn't load agents"
+              body="Pull to try again, or check that this Hermes host has a dashboard you can reach."
+              action={
+                <Button
+                  label="Try again"
+                  onPress={() => {
+                    void refresh();
+                  }}
+                />
+              }
+            />
           ) : (
             <EmptyState
               title="No agents yet"
-              body="Create a named agent. Each one is a forever chat with Hermes."
+              body="Add someone. Each agent is a forever chat on this host."
               action={<Button label="New agent" onPress={() => router.push('/agents/new')} />}
             />
           )
@@ -75,11 +116,20 @@ export default function AgentsHomeScreen() {
   );
 }
 
-function AgentRow({ agent }: { agent: AgentRecord }) {
+function AgentRow({ agent }: { agent: RosterAgent }) {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-      onPress={() => router.push(`/agents/${agent.id}`)}
+      onPress={() => {
+        void (async () => {
+          await ensureLocalPinForHostAgent({
+            hostId: agent.id,
+            displayName: agent.name,
+            description: agent.whatTheyDo,
+          });
+          router.push(`/agents/${encodeURIComponent(agent.id)}`);
+        })();
+      }}
       accessibilityRole="button"
       accessibilityLabel={`Open chat with ${agent.name}`}
     >
@@ -89,9 +139,17 @@ function AgentRow({ agent }: { agent: AgentRecord }) {
           {agent.name}
         </Text>
         <Text style={styles.preview} numberOfLines={1}>
-          {agent.description || 'Named agent'}
+          {agent.subtitle || agent.whatTheyDo || 'Named agent'}
         </Text>
       </View>
+      <Pressable
+        onPress={() => router.push(`/agents/${encodeURIComponent(agent.id)}/edit`)}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={`Edit ${agent.name}`}
+      >
+        <Text style={styles.edit}>Edit</Text>
+      </Pressable>
     </Pressable>
   );
 }
@@ -137,5 +195,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 15,
     lineHeight: 20,
+  },
+  edit: {
+    ...plexSans.medium,
+    color: colors.accent,
+    fontSize: 15,
   },
 });

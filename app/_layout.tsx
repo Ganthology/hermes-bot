@@ -9,6 +9,7 @@ import { StyleSheet } from 'react-native';
 import { fontSources } from '../src/fonts';
 import { GatewayProvider } from '../src/state/GatewayProvider';
 import { AgentsProvider } from '../src/state/AgentsProvider';
+import { HostAgentsProvider } from '../src/state/HostAgentsProvider';
 import { colors } from '../src/theme';
 
 const appTheme = {
@@ -36,24 +37,27 @@ export default function RootLayout() {
         <ThemeProvider value={appTheme}>
           <GatewayProvider>
             <AgentsProvider>
-              <StatusBar style="dark" />
-              <Stack
-                screenOptions={{
-                  headerTransparent: true,
-                  headerBlurEffect: 'none',
-                  headerShadowVisible: false,
-                  headerTintColor: colors.text,
-                  headerTitleStyle: { color: colors.text },
-                  headerBackButtonDisplayMode: 'minimal',
-                  contentStyle: { backgroundColor: colors.bg },
-                }}
-              >
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="connect" options={{ title: 'Connect' }} />
-                <Stack.Screen name="agents/new" options={{ title: 'New agent' }} />
-                <Stack.Screen name="agents/[id]" options={{ title: 'Chat' }} />
-              </Stack>
+              <HostAgentsProvider>
+                <StatusBar style="dark" />
+                <Stack
+                  screenOptions={{
+                    headerTransparent: true,
+                    headerBlurEffect: 'none',
+                    headerShadowVisible: false,
+                    headerTintColor: colors.text,
+                    headerTitleStyle: { color: colors.text },
+                    headerBackButtonDisplayMode: 'minimal',
+                    contentStyle: { backgroundColor: colors.bg },
+                  }}
+                >
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="connect" options={{ title: 'Connect' }} />
+                  <Stack.Screen name="agents/new" options={{ title: 'New agent' }} />
+                  <Stack.Screen name="agents/[id]/index" options={{ title: 'Chat' }} />
+                  <Stack.Screen name="agents/[id]/edit" options={{ title: 'Edit agent' }} />
+                </Stack>
+              </HostAgentsProvider>
             </AgentsProvider>
           </GatewayProvider>
         </ThemeProvider>

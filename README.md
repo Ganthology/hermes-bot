@@ -83,10 +83,20 @@ Turn activity (honest working caption, collapsible reasoning, tool rows) follows
 1. Paste the Hermes **base URL** (hint: `http://HOST:9119`).
 2. Paste an **auth / dashboard session token**.
 3. Tap **Connect**. Credentials are stored in **expo-secure-store** (no Hermes Bot account system).
-4. Tap **New agent** → name + one-line “what it is for”.
+4. On **Hermes Bot** home, open an agent from the host roster — or tap **New agent**.
 5. Open the agent and send a message. Assistant markdown streams from `message.delta` when the gateway is up.
 6. Attach from chat: tap **+** next to the composer → **Camera**, **Photo library**, or **File**. Stage chips appear above the field (tap **×** to remove). Caption is optional — you can send attachments alone. The phone always uploads bytes over `:9119` (`image.attach_bytes` / `pdf.attach` / `file.attach`); it never sends a phone filesystem path to the gateway.
 7. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
+
+### Add or edit an agent
+
+Agents on the phone are the same teammates as on the Hermes host (Bot Mode). The UI never asks you to edit files or paste config.
+
+1. **New agent** — Name + What they do. Choose **Start blank** or **Copy from an existing agent**, then Continue. You land in **chat**. Edit **Who they are** later from the roster or the chat header.
+2. **Edit** — From the roster row, or **Edit** in the chat header. Fields: Name, Role, What they do, Who they are. **Save** / **Discard**. Remove is confirm-only and blocked for the default agent.
+3. If the host cannot list or edit agents, you see a short message with a next step — not a stack trace. Chat still uses the dashboard WebSocket; agent details use the host’s documented dashboard APIs (or the matching TUI methods when REST is unavailable).
+
+Skills, connected services, models, and keys are separate screens — not part of this editor.
 
 ### Auth notes
 
@@ -99,15 +109,16 @@ Turn activity (honest working caption, collapsible reasoning, tool rows) follows
 | Surface | Behavior |
 |--------|----------|
 | Connect | URL + token → Secure Store |
-| Home | Named agent list, empty state, New agent |
-| New agent | `session.create` (+ optional `profile` if `profiles.list` returns one), pin `stored_session_id` locally |
+| Home | Host agent roster (Name + short purpose), empty/error states, New agent |
+| New agent | Name + What they do → create on host (blank or copy) → chat |
+| Edit agent | Name, Role, What they do, Who they are → Save / Discard; Remove behind confirm |
 | Chat | Composer (+ attach), message list, SQLite cache, reconcile via `session.history` / resume |
 | Streaming | TUI JSON-RPC over `/api/ws`; assistant markdown via StreamdownText |
 | Attachments | Camera / photo library / files → remote byte upload (`image.attach_bytes` / `pdf.attach` / `file.attach`) then `prompt.submit` |
 | Activity | Thinking / reasoning / tool progress when the host emits it; otherwise “Working…” while the turn is in flight |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 
-RPC used: `session.create`, `session.list` (debug only), `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, `approval.respond`, `clarify.respond`, `sudo.respond`, `secret.respond`.
+Agent metadata: dashboard `GET/POST/PATCH/PUT/DELETE /api/profiles…` (same connect host), with TUI `profiles.list` / `profiles.create` / `profiles.describe` / `profiles.configure` as fallback. Chat RPC: `session.create`, `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, respond methods.
 
 Stream events: `message.start`, `message.delta`, `message.complete`, `thinking.delta`, `reasoning.delta`, `status.update`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
 

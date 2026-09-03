@@ -50,6 +50,40 @@ export async function getAgent(id: string): Promise<AgentRecord | null> {
   return row ? mapRow(row) : null;
 }
 
+/** Local pin/cache row for a host agent id (Hermes profile name). */
+export async function getAgentByProfileName(
+  profileName: string,
+): Promise<AgentRecord | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<AgentRow>(
+    'SELECT * FROM agents WHERE profile_name = ? ORDER BY updated_at DESC LIMIT 1',
+    [profileName],
+  );
+  return row ? mapRow(row) : null;
+}
+
+export async function updateAgentMeta(
+  id: string,
+  patch: { name?: string; description?: string; profileName?: string | null },
+): Promise<void> {
+  const db = await getDb();
+  const current = await getAgent(id);
+  if (!current) {
+    return;
+  }
+  const name = patch.name !== undefined ? patch.name.trim() : current.name;
+  const description =
+    patch.description !== undefined ? patch.description.trim() : current.description;
+  const profileName =
+    patch.profileName !== undefined ? patch.profileName : current.profileName;
+  await db.runAsync(
+    `UPDATE agents
+     SET name = ?, description = ?, profile_name = ?, updated_at = ?
+     WHERE id = ?`,
+    [name, description, profileName, Date.now(), id],
+  );
+}
+
 export async function createAgent(input: {
   name: string;
   description: string;
