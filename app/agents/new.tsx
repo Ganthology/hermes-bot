@@ -1,82 +1,70 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  View,
 } from 'react-native';
 import { router } from 'expo-router';
 
-import { useAgents } from '../../src/state/AgentsProvider';
-import { useGateway } from '../../src/state/GatewayProvider';
-import { profilesList, sessionCreate } from '../../src/gateway/methods';
+import { useHostAgents } from '../../src/state/HostAgentsProvider';
 import { Button, ErrorBanner, Field } from '../../src/components/ui';
+import { ProfilesReadOnlyError } from '../../src/profiles';
 import { colors, radii, spacing, typography } from '../../src/theme';
 
+type StartMode = 'blank' | 'copy';
+
 export default function NewAgentScreen() {
-  const { addAgent } = useAgents();
-  const { ensureConnected } = useGateway();
+  const { agents, getService, refresh } = useHostAgents();
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [whatTheyDo, setWhatTheyDo] = useState('');
+  const [mode, setMode] = useState<StartMode>('blank');
+  const [cloneFrom, setCloneFrom] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const cloneOptions = useMemo(
+    () => agents.filter((a) => a.id.trim().length > 0),
+    [agents],
+  );
 
   const onCreate = async () => {
     setError(null);
     const trimmedName = name.trim();
-    const trimmedDescription = description.trim();
     if (!trimmedName) {
       setError('Give this agent a name.');
+      return;
+    }
+    if (mode === 'copy' && !cloneFrom) {
+      setError('Pick an agent to copy from, or start blank.');
       return;
     }
 
     setBusy(true);
     try {
-      const client = await ensureConnected();
-
-      // Optional profile if the gateway returns one — never invent profile YAML.
-      let profileName: string | undefined;
-      const listed = await profilesList(client);
-      if (
-        listed &&
-        typeof listed === 'object' &&
-        Array.isArray((listed as { profiles?: unknown }).profiles)
-      ) {
-        const profiles = (listed as { profiles: { name?: string }[] }).profiles;
-        const first = profiles.find((p) => typeof p.name === 'string' && p.name.trim());
-        if (first?.name) {
-          profileName = first.name.trim();
-        }
+      const svc = await getService();
+      if (!svc.capabilities.canCreate) {
+        throw new ProfilesReadOnlyError(
+          "This host doesn't allow creating agents yet. Update Hermes or use the desktop dashboard.",
+        );
       }
-
-      const created = await sessionCreate(client, {
-        title: trimmedName,
-        ...(profileName ? { profile: profileName } : {}),
-      });
-
-      const stored =
-        created.stored_session_id?.trim() ||
-        created.session_id?.trim() ||
-        null;
-
-      if (!stored) {
-        throw new Error('Gateway created a chat but returned no id to pin.');
-      }
-
-      const agent = await addAgent({
+      const created = await svc.create({
         name: trimmedName,
-        description: trimmedDescription,
-        storedSessionId: stored,
-        liveSessionId: created.session_id ?? null,
-        profileName: profileName ?? null,
+        whatTheyDo: whatTheyDo.trim(),
+        cloneFrom: mode === 'copy' ? cloneFrom : null,
       });
-
-      // Thin v1: description is local context; optional first prompt seeds the forever chat.
-      router.replace(`/agents/${agent.id}`);
+      await refresh();
+      router.replace(`/agents/${encodeURIComponent(created.id)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create agent');
+      if (err instanceof ProfilesReadOnlyError) {
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'Could not create agent');
+      }
     } finally {
       setBusy(false);
     }
@@ -92,7 +80,9 @@ export default function NewAgentScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.lead}>Name someone. Say what they are for. That is the forever chat.</Text>
+        <Text style={styles.lead}>
+          Name them. Say what they do. Then you’ll set who they are.
+        </Text>
         {error ? <ErrorBanner message={error} /> : null}
 
         <Field label="Name">
@@ -102,13 +92,14 @@ export default function NewAgentScreen() {
             placeholder="Research buddy"
             placeholderTextColor={colors.textDim}
             style={styles.input}
+            autoCapitalize="words"
           />
         </Field>
 
-        <Field label="What it is for" hint="One line. Kept on the phone; not YAML.">
+        <Field label="What they do">
           <TextInput
-            value={description}
-            onChangeText={setDescription}
+            value={whatTheyDo}
+            onChangeText={setWhatTheyDo}
             placeholder="Helps me dig through papers"
             placeholderTextColor={colors.textDim}
             style={[styles.input, styles.multiline]}
@@ -116,8 +107,49 @@ export default function NewAgentScreen() {
           />
         </Field>
 
+        <Text style={styles.section}>Start from</Text>
+        <View style={styles.choiceRow}>
+          <Choice
+            label="Start blank"
+            selected={mode === 'blank'}
+            onPress={() => {
+              setMode('blank');
+              setCloneFrom(null);
+            }}
+          />
+          <Choice
+            label="Copy from an existing agent"
+            selected={mode === 'copy'}
+            onPress={() => setMode('copy')}
+          />
+        </View>
+
+        {mode === 'copy' ? (
+          <View style={styles.cloneList}>
+            {cloneOptions.length === 0 ? (
+              <Text style={styles.cloneEmpty}>No agents to copy yet. Start blank instead.</Text>
+            ) : (
+              cloneOptions.map((agent) => (
+                <Pressable
+                  key={agent.id}
+                  onPress={() => setCloneFrom(agent.id)}
+                  style={[
+                    styles.cloneRow,
+                    cloneFrom === agent.id && styles.cloneRowSelected,
+                  ]}
+                >
+                  <Text style={styles.cloneName}>{agent.name}</Text>
+                  <Text style={styles.cloneDesc} numberOfLines={1}>
+                    {agent.subtitle}
+                  </Text>
+                </Pressable>
+              ))
+            )}
+          </View>
+        ) : null}
+
         <Button
-          label={busy ? 'Creating…' : 'Create agent'}
+          label={busy ? 'Creating…' : 'Continue'}
           disabled={busy}
           onPress={() => {
             void onCreate();
@@ -128,10 +160,30 @@ export default function NewAgentScreen() {
   );
 }
 
+function Choice({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.choice, selected && styles.choiceSelected]}
+    >
+      <Text style={[styles.choiceLabel, selected && styles.choiceLabelSelected]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: {
     padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   lead: {
     color: colors.textMuted,
@@ -143,12 +195,73 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 14,
     color: colors.text,
-    backgroundColor: colors.bgSoft,
+    backgroundColor: colors.bgElevated,
+    fontSize: 17,
   },
   multiline: {
     minHeight: 88,
     textAlignVertical: 'top',
+  },
+  section: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  choiceRow: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  choice: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.bgElevated,
+  },
+  choiceSelected: {
+    borderColor: colors.accent,
+    backgroundColor: colors.userBubble,
+  },
+  choiceLabel: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  choiceLabelSelected: {
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  cloneList: {
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  cloneEmpty: {
+    color: colors.textDim,
+    ...typography.caption,
+  },
+  cloneRow: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    backgroundColor: colors.bgElevated,
+  },
+  cloneRowSelected: {
+    borderColor: colors.accent,
+  },
+  cloneName: {
+    color: colors.text,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  cloneDesc: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginTop: 2,
   },
 });

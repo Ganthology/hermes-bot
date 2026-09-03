@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
-import { mergeAssistantContent } from '../../src/chat/assistantStream';
+import { mergeAssistantContent } from '../../../src/chat/assistantStream';
 import {
   formatUserMessageContent,
   syncAttachmentsForSubmit,
   type StagedAttachment,
-} from '../../src/chat/attachments';
+} from '../../../src/chat/attachments';
 import {
   applyReasoningDelta,
   applyStatusUpdate,
@@ -21,10 +21,10 @@ import {
   emptyTurnActivity,
   endTurn,
   type TurnActivityState,
-} from '../../src/chat/turnActivity';
-import { Composer } from '../../src/components/Composer';
-import { MessageList } from '../../src/components/MessageList';
-import { ErrorBanner } from '../../src/components/ui';
+} from '../../../src/chat/turnActivity';
+import { Composer } from '../../../src/components/Composer';
+import { MessageList } from '../../../src/components/MessageList';
+import { ErrorBanner } from '../../../src/components/ui';
 import {
   approvalRespond,
   clarifyRespond,
@@ -33,20 +33,29 @@ import {
   sessionHistory,
   sessionResume,
   sudoRespond,
-} from '../../src/gateway/methods';
-import type { GatewayEvent, InteractiveRequest } from '../../src/gateway/types';
-import { useAgents } from '../../src/state/AgentsProvider';
-import { useGateway } from '../../src/state/GatewayProvider';
-import { getAgent } from '../../src/storage/agents';
+} from '../../../src/gateway/methods';
+import type { GatewayEvent, InteractiveRequest } from '../../../src/gateway/types';
+import { openChatForHostAgent } from '../../../src/profiles';
+import { useAgents } from '../../../src/state/AgentsProvider';
+import { useGateway } from '../../../src/state/GatewayProvider';
+import { getAgent, getAgentByProfileName, type AgentRecord } from '../../../src/storage/agents';
 import {
   insertMessage,
   listMessages,
   replaceMessagesFromHistory,
   updateMessageContent,
   type MessageRecord,
-} from '../../src/storage/messages';
-import { colors, spacing, typography } from '../../src/theme';
-import { coerceText, createId } from '../../src/utils/text';
+} from '../../../src/storage/messages';
+import { colors, spacing, typography } from '../../../src/theme';
+import { coerceText, createId } from '../../../src/utils/text';
+
+async function resolveAgentRecord(routeId: string): Promise<AgentRecord | null> {
+  const byId = await getAgent(routeId);
+  if (byId) {
+    return byId;
+  }
+  return getAgentByProfileName(routeId);
+}
 
 function requestIdFromPayload(payload: Record<string, unknown> | undefined): string {
   if (!payload) {
@@ -63,10 +72,13 @@ function requestIdFromPayload(payload: Record<string, unknown> | undefined): str
 
 export default function AgentChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const agentId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
+  const routeId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
   const { ensureConnected, client, credentials } = useGateway();
   const { patchSessions, bumpAgent } = useAgents();
+  const navigation = useNavigation();
 
+  const [agentId, setAgentId] = useState(routeId);
+  const [hostProfileId, setHostProfileId] = useState<string | null>(null);
   const [title, setTitle] = useState('Chat');
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [interactive, setInteractive] = useState<InteractiveRequest[]>([]);
@@ -80,6 +92,20 @@ export default function AgentChatScreen() {
   const streamingIdRef = useRef<string | null>(null);
   const liveSessionRef = useRef<string | null>(null);
   const storedSessionRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    const editId = hostProfileId ?? routeId;
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={() => router.push(`/agents/${encodeURIComponent(editId)}/edit`)}
+          hitSlop={8}
+        >
+          <Text style={styles.headerAction}>Edit</Text>
+        </Pressable>
+      ),
+    });
+  }, [navigation, hostProfileId, routeId]);
 
   const upsertStreaming = useCallback((agentKey: string, chunk: string, done: boolean) => {
     let id = streamingIdRef.current;
@@ -261,28 +287,45 @@ export default function AgentChatScreen() {
       setLoading(true);
       setError(null);
       try {
-        const agent = await getAgent(agentId);
-        if (!agent) {
-          throw new Error('Agent not found');
-        }
-        if (cancelled) {
-          return;
-        }
-        setTitle(agent.name);
-        storedSessionRef.current = agent.storedSessionId;
-        const cached = await listMessages(agentId);
-        if (!cancelled) {
-          setMessages(cached);
-        }
-
+        let agent = await resolveAgentRecord(routeId);
         const gw = await ensureConnected();
         if (cancelled) {
           return;
         }
+
+        if (!agent || !agent.storedSessionId) {
+          const hostId = agent?.profileName ?? routeId;
+          const displayName = agent?.name ?? routeId;
+          const description = agent?.description ?? '';
+          const opened = await openChatForHostAgent({
+            hostId,
+            displayName,
+            description,
+            client: gw,
+          });
+          agent = await getAgent(opened.localAgentId);
+          if (!agent) {
+            throw new Error('Could not open this agent.');
+          }
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setAgentId(agent.id);
+        setHostProfileId(agent.profileName ?? routeId);
+        setTitle(agent.name);
+        storedSessionRef.current = agent.storedSessionId;
+        const cached = await listMessages(agent.id);
+        if (!cancelled) {
+          setMessages(cached);
+        }
+
         offEvent = gw.on('*', handleGatewayEvent);
 
         if (!agent.storedSessionId) {
-          throw new Error('This agent has no pinned chat on the Hermes host.');
+          throw new Error('This agent has no chat yet. Try opening them again.');
         }
 
         const resumed = await sessionResume(gw, {
@@ -293,7 +336,7 @@ export default function AgentChatScreen() {
         const liveId = resumed.session_id;
         liveSessionRef.current = liveId;
         setLiveSessionId(liveId);
-        await patchSessions(agentId, {
+        await patchSessions(agent.id, {
           liveSessionId: liveId,
           storedSessionId: resumed.stored_session_id ?? agent.storedSessionId,
         });
@@ -306,7 +349,7 @@ export default function AgentChatScreen() {
         }
 
         if (historyMessages && historyMessages.length > 0) {
-          const reconciled = await replaceMessagesFromHistory(agentId, historyMessages);
+          const reconciled = await replaceMessagesFromHistory(agent.id, historyMessages);
           if (!cancelled) {
             setMessages(reconciled);
           }
@@ -326,7 +369,7 @@ export default function AgentChatScreen() {
       cancelled = true;
       offEvent?.();
     };
-  }, [agentId, ensureConnected, handleGatewayEvent, patchSessions]);
+  }, [routeId, ensureConnected, handleGatewayEvent, patchSessions]);
 
   const onSend = async (text: string, attachments: StagedAttachment[] = []) => {
     setError(null);
@@ -448,6 +491,11 @@ export default function AgentChatScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
+  headerAction: {
+    color: colors.accent,
+    fontWeight: '600',
+    paddingHorizontal: spacing.sm,
+  },
   loading: {
     flex: 1,
     alignItems: 'center',
