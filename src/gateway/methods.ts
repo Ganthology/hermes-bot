@@ -2,6 +2,12 @@ import type { HermesGatewayClient } from './client';
 import type {
   ApprovalRespondParams,
   ClarifyRespondParams,
+  FileAttachParams,
+  FileAttachResult,
+  ImageAttachBytesParams,
+  ImageAttachBytesResult,
+  PdfAttachParams,
+  PdfAttachResult,
   PromptSubmitParams,
   SecretRespondParams,
   SessionCreateParams,
@@ -11,6 +17,9 @@ import type {
   SessionResumeResult,
   SudoRespondParams,
 } from './types';
+
+/** Large byte uploads + pdf.attach page render can exceed the default RPC timeout. */
+const ATTACH_TIMEOUT_MS = 180_000;
 
 /**
  * Typed wrappers around TUI-gateway methods used by Hermes Bot.
@@ -64,6 +73,62 @@ export async function promptSubmit(
 ): Promise<unknown> {
   const { session_id, text } = params;
   return client.request('prompt.submit', { session_id, text });
+}
+
+/**
+ * Remote image upload. Canonical fields: content_base64 + filename.
+ * Do not use `image.attach` with a phone filesystem path.
+ */
+export async function imageAttachBytes(
+  client: HermesGatewayClient,
+  params: ImageAttachBytesParams,
+): Promise<ImageAttachBytesResult> {
+  return client.request<ImageAttachBytesResult>(
+    'image.attach_bytes',
+    {
+      session_id: params.session_id,
+      content_base64: params.content_base64,
+      ...(params.filename ? { filename: params.filename } : {}),
+    },
+    ATTACH_TIMEOUT_MS,
+  );
+}
+
+/**
+ * PDF → vision tiles via gateway pdftoppm. Remote path uses content_base64.
+ */
+export async function pdfAttach(
+  client: HermesGatewayClient,
+  params: PdfAttachParams,
+): Promise<PdfAttachResult> {
+  return client.request<PdfAttachResult>(
+    'pdf.attach',
+    {
+      session_id: params.session_id,
+      content_base64: params.content_base64,
+      ...(params.filename ? { filename: params.filename } : {}),
+    },
+    ATTACH_TIMEOUT_MS,
+  );
+}
+
+/**
+ * Stage a non-image file and return `@file:` ref_text for the prompt.
+ */
+export async function fileAttach(
+  client: HermesGatewayClient,
+  params: FileAttachParams,
+): Promise<FileAttachResult> {
+  return client.request<FileAttachResult>(
+    'file.attach',
+    {
+      session_id: params.session_id,
+      name: params.name,
+      data_url: params.data_url,
+      ...(params.path ? { path: params.path } : {}),
+    },
+    ATTACH_TIMEOUT_MS,
+  );
 }
 
 export async function approvalRespond(
