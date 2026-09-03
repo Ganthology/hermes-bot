@@ -6,6 +6,7 @@ import type {
   FileAttachResult,
   ImageAttachBytesParams,
   ImageAttachBytesResult,
+  McpServersListResult,
   PdfAttachParams,
   PdfAttachResult,
   PromptSubmitParams,
@@ -15,7 +16,12 @@ import type {
   SessionHistoryResult,
   SessionResumeParams,
   SessionResumeResult,
+  SkillsInspectResult,
+  SkillsListResult,
   SudoRespondParams,
+  ToolsListResult,
+  ToolsShowResult,
+  ToolsetsListResult,
 } from './types';
 
 /** Large byte uploads + pdf.attach page render can exceed the default RPC timeout. */
@@ -169,4 +175,82 @@ export async function profilesList(
     // Optional — older gateways may not expose profiles.
     return null;
   }
+}
+
+/**
+ * skills.manage — list / inspect / browse / search.
+ * Optional `profile` scopes HERMES_HOME on hosts that support it.
+ */
+export async function skillsManage(
+  client: HermesGatewayClient,
+  params: {
+    action: 'list' | 'inspect' | 'browse' | 'search';
+    query?: string;
+    profile?: string;
+    page?: number;
+    page_size?: number;
+  },
+): Promise<SkillsListResult & SkillsInspectResult & Record<string, unknown>> {
+  const { action, query, profile, page, page_size } = params;
+  return client.request('skills.manage', {
+    action,
+    ...(query !== undefined ? { query } : {}),
+    ...(profile ? { profile } : {}),
+    ...(page !== undefined ? { page } : {}),
+    ...(page_size !== undefined ? { page_size } : {}),
+  });
+}
+
+export async function skillsList(
+  client: HermesGatewayClient,
+  options: { profile?: string } = {},
+): Promise<SkillsListResult> {
+  return skillsManage(client, { action: 'list', ...options }) as Promise<SkillsListResult>;
+}
+
+export async function skillsInspect(
+  client: HermesGatewayClient,
+  query: string,
+  options: { profile?: string } = {},
+): Promise<SkillsInspectResult> {
+  return skillsManage(client, {
+    action: 'inspect',
+    query,
+    ...options,
+  }) as Promise<SkillsInspectResult>;
+}
+
+/** tools.show — discovery surface with short per-tool descriptions, grouped by toolset. */
+export async function toolsShow(
+  client: HermesGatewayClient,
+  params: { session_id?: string } = {},
+): Promise<ToolsShowResult> {
+  return client.request<ToolsShowResult>('tools.show', { ...params });
+}
+
+export async function toolsList(
+  client: HermesGatewayClient,
+  params: { session_id?: string } = {},
+): Promise<ToolsListResult> {
+  return client.request<ToolsListResult>('tools.list', { ...params });
+}
+
+export async function toolsetsList(
+  client: HermesGatewayClient,
+  params: { session_id?: string } = {},
+): Promise<ToolsetsListResult> {
+  return client.request<ToolsetsListResult>('toolsets.list', { ...params });
+}
+
+/**
+ * mcp.servers.list — configured MCP servers (optional profile).
+ * Read-only browse for Hermes Bot; do not call add/remove/test from the phone.
+ */
+export async function mcpServersList(
+  client: HermesGatewayClient,
+  options: { profile?: string } = {},
+): Promise<McpServersListResult> {
+  return client.request<McpServersListResult>('mcp.servers.list', {
+    ...(options.profile ? { profile: options.profile } : {}),
+  });
 }

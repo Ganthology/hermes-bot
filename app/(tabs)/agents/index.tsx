@@ -143,6 +143,14 @@ function AgentRow({ agent }: { agent: RosterAgent }) {
         </Text>
       </View>
       <Pressable
+        onPress={() => router.push(`/agents/${encodeURIComponent(agent.id)}/info`)}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={`Info for ${agent.name}`}
+      >
+        <Text style={styles.edit}>Info</Text>
+      </Pressable>
+      <Pressable
         onPress={() => router.push(`/agents/${encodeURIComponent(agent.id)}/edit`)}
         hitSlop={10}
         accessibilityRole="button"

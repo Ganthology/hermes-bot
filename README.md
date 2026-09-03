@@ -86,7 +86,8 @@ Turn activity (honest working caption, collapsible reasoning, tool rows) follows
 4. On **Hermes Bot** home, open an agent from the host roster — or tap **New agent**.
 5. Open the agent and send a message. Assistant markdown streams from `message.delta` when the gateway is up.
 6. Attach from chat: tap **+** next to the composer → **Camera**, **Photo library**, or **File**. Stage chips appear above the field (tap **×** to remove). Caption is optional — you can send attachments alone. The phone always uploads bytes over `:9119` (`image.attach_bytes` / `pdf.attach` / `file.attach`); it never sends a phone filesystem path to the gateway.
-7. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
+7. Tap **Info** on a roster row (or **Info** in the chat header) → Agent info → **Skills** / **MCP** to browse what this host exposes (read-only; shared across agents on the connection).
+8. If the gateway is down or the ticket is bad, you get a human error (including WS close **4401** / **4403**), not a hang.
 
 ### Add or edit an agent
 
@@ -112,13 +113,14 @@ Skills, connected services, models, and keys are separate screens — not part o
 | Home | Host agent roster (Name + short purpose), empty/error states, New agent |
 | New agent | Name + What they do → create on host (blank or copy) → chat |
 | Edit agent | Name, Role, What they do, Who they are → Save / Discard; Remove behind confirm |
+| Agent info | Read-only Skills + MCP browse (host/profile-scoped); open via **Info** on a roster row or chat header |
 | Chat | Composer (+ attach), message list, SQLite cache, reconcile via `session.history` / resume |
 | Streaming | TUI JSON-RPC over `/api/ws`; assistant markdown via StreamdownText |
 | Attachments | Camera / photo library / files → remote byte upload (`image.attach_bytes` / `pdf.attach` / `file.attach`) then `prompt.submit` |
 | Activity | Thinking / reasoning / tool progress when the host emits it; otherwise “Working…” while the turn is in flight |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
 
-Agent metadata: dashboard `GET/POST/PATCH/PUT/DELETE /api/profiles…` (same connect host), with TUI `profiles.list` / `profiles.create` / `profiles.describe` / `profiles.configure` as fallback. Chat RPC: `session.create`, `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, respond methods.
+Agent metadata: dashboard `GET/POST/PATCH/PUT/DELETE /api/profiles…` (same connect host), with TUI `profiles.list` / `profiles.create` / `profiles.describe` / `profiles.configure` as fallback. Chat RPC: `session.create`, `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, respond methods. Agent info (read-only): `skills.manage` (list/inspect), `tools.show`, `mcp.servers.list`.
 
 Stream events: `message.start`, `message.delta`, `message.complete`, `thinking.delta`, `reasoning.delta`, `status.update`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
 
@@ -130,7 +132,8 @@ There is **no `/new` in the bot chat** — forking the relationship is out of sc
 
 - Hosting / provisioning / custom backend / Fastlane / EAS secrets
 - Desktop-in-WebView shells
-- Power-user cockpits (logs, env keys, MCP browser, cron, session archives) — MCP is tools **on Hermes**, not the phone protocol
+- Power-user cockpits (logs, env keys, cron, session archives) — MCP install/enable from the phone is out of scope; Agent info is **browse-only**
+- Connected-services catalog (GitHub CLI, Fly, Supabase as product integrations) — parallel surface, not this PR
 - `browser_exec` session isolation (different namespace; skipped in this scaffold)
 - Second conversation database — Hermes SQLite is source of truth; the phone is cache + stream
 
