@@ -79,6 +79,9 @@ function findMcpToolset(
   const want = `mcp-${normalizeServiceKey(serverName)}`;
   const wantRaw = `mcp-${serverName.toLowerCase()}`;
   for (const ts of toolsets) {
+    if (!ts.name) {
+      continue;
+    }
     const n = ts.name.toLowerCase();
     if (n === want || n === wantRaw || normalizeServiceKey(ts.name) === normalizeServiceKey(serverName)) {
       return ts;
@@ -283,7 +286,7 @@ export function inferConnectedServices(input: InferConnectedServicesInput): Conn
   // Enabled mcp-* toolsets for known products when servers/catalog RPCs are absent.
   if ((!input.mcpServers || input.mcpServers.length === 0) && input.toolsets) {
     for (const ts of input.toolsets) {
-      if (!ts.name.toLowerCase().startsWith('mcp-')) {
+      if (!ts.name || !ts.name.toLowerCase().startsWith('mcp-')) {
         continue;
       }
       if (ts.enabled === false) {
