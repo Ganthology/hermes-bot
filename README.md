@@ -119,8 +119,11 @@ Skills, connected services, models, and keys are separate screens — not part o
 | Attachments | Camera / photo library / files → remote byte upload (`image.attach_bytes` / `pdf.attach` / `file.attach`) then `prompt.submit` |
 | Activity | Thinking / reasoning / tool progress when the host emits it; otherwise “Working…” while the turn is in flight |
 | Cards | `approval` / `clarify` / `sudo` / `secret` request → respond methods |
+| Connected | Host/profile-scoped product services (GitHub via gh skills, well-known MCP) — read-only |
 
-Agent metadata: dashboard `GET/POST/PATCH/PUT/DELETE /api/profiles…` (same connect host), with TUI `profiles.list` / `profiles.create` / `profiles.describe` / `profiles.configure` as fallback. Chat RPC: `session.create`, `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, respond methods. Agent info (read-only): `skills.manage` (list/inspect), `tools.show`, `mcp.servers.list`.
+**Connected services:** from the agent list tap **Connected services**, or from a chat header. Separate screen (not the skills/MCP primitive browser). Rows show service name, connected / not / unknown, and what it enables; tap for evidence (skill names, MCP server / toolset — never secrets). Empty means nothing extra was inferred on this host.
+
+Agent metadata: dashboard `GET/POST/PATCH/PUT/DELETE /api/profiles…` (same connect host), with TUI `profiles.list` / `profiles.create` / `profiles.describe` / `profiles.configure` as fallback. Chat RPC: `session.create`, `session.resume`, `session.history`, `prompt.submit`, `image.attach_bytes`, `pdf.attach`, `file.attach`, respond methods. Agent info (read-only): `skills.manage` (list/inspect), `tools.show`, `mcp.servers.list`. Connected (read-only): `skills.manage` / `toolsets.list` / `tools.list` / `mcp.catalog` / `mcp.servers.list`.
 
 Stream events: `message.start`, `message.delta`, `message.complete`, `thinking.delta`, `reasoning.delta`, `status.update`, `tool.*`, `approval.request`, `clarify.request`, `sudo.request`, `secret.request`.
 
@@ -133,7 +136,6 @@ There is **no `/new` in the bot chat** — forking the relationship is out of sc
 - Hosting / provisioning / custom backend / Fastlane / EAS secrets
 - Desktop-in-WebView shells
 - Power-user cockpits (logs, env keys, cron, session archives) — MCP install/enable from the phone is out of scope; Agent info is **browse-only**
-- Connected-services catalog (GitHub CLI, Fly, Supabase as product integrations) — parallel surface, not this PR
 - `browser_exec` session isolation (different namespace; skipped in this scaffold)
 - Second conversation database — Hermes SQLite is source of truth; the phone is cache + stream
 

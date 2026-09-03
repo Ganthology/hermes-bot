@@ -58,6 +58,14 @@ export default function AgentsHomeScreen() {
           <ErrorBanner message={error} />
         </View>
       ) : null}
+      <Pressable
+        onPress={() => router.push('/connected')}
+        style={styles.bannerWrap}
+        accessibilityRole="button"
+        accessibilityLabel="Connected services"
+      >
+        <Text style={styles.connected}>Connected services</Text>
+      </Pressable>
     </>
   );
 
@@ -171,6 +179,12 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'right',
     marginTop: spacing.xs,
+  },
+  connected: {
+    ...plexSans.medium,
+    color: colors.accent,
+    fontSize: 15,
+    paddingBottom: spacing.sm,
   },
   loading: {
     color: colors.textMuted,
