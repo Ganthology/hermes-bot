@@ -163,10 +163,9 @@ const styles = StyleSheet.create({
     ...typography.body,
   },
   empty: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
     gap: spacing.sm,
   },
   emptyTitle: {

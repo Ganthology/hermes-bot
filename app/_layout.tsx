@@ -1,40 +1,62 @@
 import React from 'react';
-import { Stack } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { StyleSheet } from 'react-native';
 
+import { fontSources } from '../src/fonts';
 import { GatewayProvider } from '../src/state/GatewayProvider';
 import { AgentsProvider } from '../src/state/AgentsProvider';
 import { colors } from '../src/theme';
 
+const appTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.accent,
+    background: colors.bg,
+    card: colors.bg,
+    text: colors.text,
+    border: colors.border,
+  },
+};
+
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(fontSources);
+
+  if (!fontsLoaded && !fontError) {
+    return <GestureHandlerRootView style={styles.root} />;
+  }
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <KeyboardProvider>
-        <GatewayProvider>
-          <AgentsProvider>
-            <StatusBar style="dark" />
-            <Stack
-              screenOptions={{
-                headerTransparent: true,
-                headerBlurEffect: 'none',
-                headerShadowVisible: false,
-                headerTintColor: colors.text,
-                headerTitleStyle: { fontWeight: '600' },
-                headerBackButtonDisplayMode: 'minimal',
-                contentStyle: { backgroundColor: colors.bg },
-              }}
-            >
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="connect" options={{ title: 'Connect' }} />
-              <Stack.Screen name="agents/index" options={{ title: 'Hermes Bot' }} />
-              <Stack.Screen name="agents/new" options={{ title: 'New agent' }} />
-              <Stack.Screen name="agents/[id]" options={{ title: 'Chat' }} />
-            </Stack>
-          </AgentsProvider>
-        </GatewayProvider>
+        <ThemeProvider value={appTheme}>
+          <GatewayProvider>
+            <AgentsProvider>
+              <StatusBar style="dark" />
+              <Stack
+                screenOptions={{
+                  headerTransparent: true,
+                  headerBlurEffect: 'none',
+                  headerShadowVisible: false,
+                  headerTintColor: colors.text,
+                  headerTitleStyle: { color: colors.text },
+                  headerBackButtonDisplayMode: 'minimal',
+                  contentStyle: { backgroundColor: colors.bg },
+                }}
+              >
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="connect" options={{ title: 'Connect' }} />
+                <Stack.Screen name="agents/new" options={{ title: 'New agent' }} />
+                <Stack.Screen name="agents/[id]" options={{ title: 'Chat' }} />
+              </Stack>
+            </AgentsProvider>
+          </GatewayProvider>
+        </ThemeProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
   );
