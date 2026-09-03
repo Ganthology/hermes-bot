@@ -9,16 +9,26 @@ import {
 } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 
+import {
+  extractInboundImagePaths,
+  stripMediaDirectives,
+} from '../chat/attachments';
 import type { TurnActivityState } from '../chat/turnActivity';
 import type { MessageRecord } from '../storage/messages';
 import type { InteractiveRequest } from '../gateway/types';
 import { colors, radii, spacing, typography } from '../theme';
 import { InteractiveCard } from './InteractiveCard';
+import { RemoteMediaImage } from './RemoteMediaImage';
 import { StreamingMarkdown } from './StreamingMarkdown';
 import { TurnActivityPanel } from './TurnActivityPanel';
 
 const NEAR_BOTTOM_PX = 96;
 const bubbleLayout = LinearTransition.duration(120);
+
+export type MediaCredentials = {
+  baseUrl: string;
+  token: string;
+};
 
 export function MessageList({
   messages,
@@ -27,6 +37,7 @@ export function MessageList({
   responding,
   activity,
   header,
+  mediaCredentials,
 }: {
   messages: MessageRecord[];
   interactive: InteractiveRequest[];
@@ -34,6 +45,8 @@ export function MessageList({
   responding?: boolean;
   activity: TurnActivityState;
   header?: React.ReactNode;
+  /** When set, assistant MEDIA:/path images load via GET /api/media on :9119. */
+  mediaCredentials?: MediaCredentials | null;
 }) {
   const listRef = useRef<FlatList<MessageRecord>>(null);
   const pinnedToBottomRef = useRef(true);
@@ -86,7 +99,9 @@ export function MessageList({
       keyExtractor={(item) => item.id}
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.content}
-      renderItem={({ item }) => <Bubble message={item} />}
+      renderItem={({ item }) => (
+        <Bubble message={item} mediaCredentials={mediaCredentials} />
+      )}
       extraData={`${lastContent}:${lastStreaming}:${activityKey}`}
       ListHeaderComponent={header ? <View style={styles.banner}>{header}</View> : null}
       onScroll={onScroll}
@@ -111,8 +126,21 @@ export function MessageList({
   );
 }
 
-function Bubble({ message }: { message: MessageRecord }) {
+function Bubble({
+  message,
+  mediaCredentials,
+}: {
+  message: MessageRecord;
+  mediaCredentials?: MediaCredentials | null;
+}) {
   const isUser = message.role === 'user';
+  const inboundPaths =
+    !isUser && mediaCredentials
+      ? extractInboundImagePaths(message.content)
+      : [];
+  const displayContent =
+    inboundPaths.length > 0 ? stripMediaDirectives(message.content) : message.content;
+
   return (
     <Animated.View
       layout={bubbleLayout}
@@ -124,11 +152,25 @@ function Bubble({ message }: { message: MessageRecord }) {
       {isUser ? (
         <Text style={styles.body}>{message.content}</Text>
       ) : (
-        <StreamingMarkdown
-          markdown={message.content}
-          streaming={message.streaming}
-          smooth={Boolean(message.live || message.streaming)}
-        />
+        <>
+          {displayContent ? (
+            <StreamingMarkdown
+              markdown={displayContent}
+              streaming={message.streaming}
+              smooth={Boolean(message.live || message.streaming)}
+            />
+          ) : null}
+          {mediaCredentials
+            ? inboundPaths.map((path) => (
+                <RemoteMediaImage
+                  key={`${message.id}:${path}`}
+                  path={path}
+                  baseUrl={mediaCredentials.baseUrl}
+                  token={mediaCredentials.token}
+                />
+              ))
+            : null}
+        </>
       )}
     </Animated.View>
   );

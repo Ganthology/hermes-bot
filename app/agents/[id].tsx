@@ -5,6 +5,11 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { mergeAssistantContent } from '../../src/chat/assistantStream';
 import {
+  formatUserMessageContent,
+  syncAttachmentsForSubmit,
+  type StagedAttachment,
+} from '../../src/chat/attachments';
+import {
   applyReasoningDelta,
   applyStatusUpdate,
   applyThinkingDelta,
@@ -59,7 +64,7 @@ function requestIdFromPayload(payload: Record<string, unknown> | undefined): str
 export default function AgentChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const agentId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
-  const { ensureConnected, client } = useGateway();
+  const { ensureConnected, client, credentials } = useGateway();
   const { patchSessions, bumpAgent } = useAgents();
 
   const [title, setTitle] = useState('Chat');
@@ -323,7 +328,7 @@ export default function AgentChatScreen() {
     };
   }, [agentId, ensureConnected, handleGatewayEvent, patchSessions]);
 
-  const onSend = async (text: string) => {
+  const onSend = async (text: string, attachments: StagedAttachment[] = []) => {
     setError(null);
     setSending(true);
     streamingIdRef.current = null;
@@ -341,18 +346,31 @@ export default function AgentChatScreen() {
         throw new Error('No live chat id — reconnect and try again');
       }
 
+      // Attach all staged items before submit. Any failure aborts — no half-prompt.
+      let submitText = text.trim();
+      let synced: StagedAttachment[] = [];
+      if (attachments.length > 0) {
+        const result = await syncAttachmentsForSubmit(gw, sid, attachments);
+        synced = result.attachments;
+        submitText = result.promptText(text);
+      }
+      if (!submitText) {
+        throw new Error('Nothing to send');
+      }
+
       const userMessage = await insertMessage({
         agentId,
         role: 'user',
-        content: text,
+        content: formatUserMessageContent(text, synced.length ? synced : attachments),
       });
       setMessages((prev) => [...prev, userMessage]);
       await bumpAgent(agentId);
-      await promptSubmit(gw, { session_id: sid, text });
+      await promptSubmit(gw, { session_id: sid, text: submitText });
     } catch (err) {
       setSending(false);
       setActivity(endTurn());
       setError(err instanceof Error ? err.message : 'Send failed');
+      throw err;
     }
   };
 
@@ -415,6 +433,7 @@ export default function AgentChatScreen() {
           onRespond={onRespond}
           activity={activity}
           header={error ? <ErrorBanner message={error} /> : null}
+          mediaCredentials={credentials}
         />
       )}
 
